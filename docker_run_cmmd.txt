@@ -1,0 +1,17 @@
+raspi
+
+sudo docker run -it --rm --device=/dev/video0 --network=host --ipc=host face_recognizer_container
+
+
+pc
+
+xhost +
+
+sudo docker run -it --rm --env=DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --network=host --ipc=host face_recognizer_container
+
+
+open stream 
+
+hostname -I
+
+/usr/local/bin/mjpg_streamer -i "input_uvc.so -r 640x480 -d /dev/video0 -f 24 -q 80" -o "output_http.so -p 8080 -w /usr/local/share/mjpg-streamer/www"
