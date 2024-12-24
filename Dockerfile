@@ -3,7 +3,6 @@ FROM ros:humble-ros-base
 # Install MTCNN dependencies (adjust as needed)
 RUN apt-get update && apt-get install -y python3-pip
 RUN apt -y  install libgl1
-RUN pip3 install mtcnn opencv-python
 
 # Copy your ROS2 node code
 COPY . /workspace/src/my_mtcnn_node

@@ -1,0 +1,3 @@
+opencv-python
+tflite-runtime==2.13.0
+ultralytics

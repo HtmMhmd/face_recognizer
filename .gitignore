@@ -1,0 +1,9 @@
+gallery_faces/
+Model/Facial-Landmark-Detection-Quantized.tflite
+Model/MediaPipeFaceDetector.tflite
+Model/MediaPipeFaceLandmarkDetector.tflite
+Model/yolov8n-face.pt
+ds_model_facenet512_detector_opencv_aligned_normalization_base_expand_0.pkl
+ds_model_facenet512_detector_yolov8_aligned_normalization_base_expand_0.pkl
+embedding_model.py
+Model/FaceNet/facenet512_weights.h5
