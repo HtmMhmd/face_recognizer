@@ -7,7 +7,7 @@ pc
 
 xhost +
 
-sudo docker run -it --rm --env=DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --network=host --ipc=host face_recognizer_container
+sudo docker run -it --rm --env=DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --device=/dev/video0:/dev/video0 --network=host --ipc=host face_recognizer_container
 
 
 open stream 
