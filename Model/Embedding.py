@@ -13,7 +13,10 @@ class Embedding:
 
 class EmbeddingContainer:
     def __init__(self):
-        self.embeddings = []
+        """
+        Initializes an empty EmbeddingContainer contains a list of bbox and embedding objects.
+        """
+        self.embeddings = []  # List of Embedding objects
 
     def add(self, bbox, embedding):
         self.embeddings.append(Embedding(bbox, embedding))

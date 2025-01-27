@@ -54,7 +54,7 @@ class FaceNetTFLiteClient(FacialRecognition):
     FaceNet TFLite model class
     """
 
-    def __init__(self, model_path: str = '/home/hatem/face_recognizer_container/Model/FaceNet/facenet.tflite'):
+    def __init__(self, model_path: str = 'Model/FaceNet/facenet.tflite', verbose = False):
         self.interpreter = tflite.Interpreter(model_path=model_path)
         self.interpreter.allocate_tensors()
         self.input_details = self.interpreter.get_input_details()

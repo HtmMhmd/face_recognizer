@@ -2,7 +2,7 @@ FROM ros:humble-ros-base
 
 # Install MTCNN dependencies (adjust as needed)
 RUN apt-get update && apt-get install -y python3-pip
-RUN apt -y  install libgl1
+RUN apt-get update && apt-get install -y --fix-missing libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev
 
 # Copy your ROS2 node code
 COPY . /workspace/src/my_mtcnn_node
