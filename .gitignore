@@ -7,3 +7,5 @@ ds_model_facenet512_detector_opencv_aligned_normalization_base_expand_0.pkl
 ds_model_facenet512_detector_yolov8_aligned_normalization_base_expand_0.pkl
 embedding_model.py
 Model/FaceNet/facenet512_weights.h5
+Model/Detection/YoloDetector/yolov8n-face(2).pt
+Model/Detection/YoloV8OnnxRuntime/yolov8n-face.onnx

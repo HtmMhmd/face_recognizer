@@ -6,7 +6,7 @@ class OpenCVHaarCascadeDetector(FaceDetector):
     """
     Face detection using OpenCV's Haar cascade classifier.
     """
-    def __init__(self, cascade_path="haarcascade_frontalface_default.xml"):
+    def __init__(self, cascade_path="faces.xml"):
         super().__init__()
         self.face_cascade = cv2.CascadeClassifier(cascade_path)
         if self.face_cascade.empty():
