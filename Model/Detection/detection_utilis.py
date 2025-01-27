@@ -17,9 +17,9 @@ def get_cropped_faces(image, boxes):
         A list of cropped face images.
     """
     cropped_faces = []
-    if boxes is not None:
+    if (boxes is not None) and (len(boxes) >= 1):
         for box in boxes:
-            x_min, y_min, x_max, y_max = map(int, box)
+            x_min, y_min, x_max, y_max  = map(int, box.boxes[0])
             cropped_face = image[y_min:y_max, x_min:x_max]
             cropped_faces.append(cropped_face)
     return cropped_faces

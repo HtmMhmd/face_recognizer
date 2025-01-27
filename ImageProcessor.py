@@ -3,21 +3,21 @@ import numpy as np
 from Verify.Verify import FaceVerifier
 from Align.Align import FaceAligner
 from ImageUtilis.image_utilis import *
-from Model.Detection.YoloDetector.YoloDetector import YOLOv8Detector
+# from Model.Detection.YoloDetector.YoloDetector import YOLOv8Detector
 from Model.Detection.detection_utilis import get_cropped_faces
-# from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
+from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
 from Model.Detection.OpencvDetector import OpencvDetector
+from Model.Detection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
 from Model.Embedding import *
-from Model.FaceNet.Facenet import *
- 
+# from Model.FaceNet.Facenet import *
 
 
 class ImageProcessor:
-    def __init__(self, use_yolo: bool = False):
+    def __init__(self, use_yolo: bool = False, verbose: bool = False):
         self.use_yolo = use_yolo
-        self.facenet_handler = FaceNet512dClient()
+        self.facenet_handler = FaceNetTFLiteHandler(verbose = verbose)
         if self.use_yolo:
-            self.detection_model = YOLOv8Detector()
+            self.detection_model = Yolov8OnnxRuntimeDetector(verbose = verbose)
         else:
             self.detection_model = OpencvDetector()
         self.Embeddings = EmbeddingContainer()
@@ -37,16 +37,19 @@ class ImageProcessor:
         return zip_results
 
     def process_image(self, image):
+
         if isinstance(image, str) and os.path.isfile(image):
             image = cv2.imread(image)
         if image is None:
             raise FileNotFoundError(f"Image not found at {image}")
+        
         if self.use_yolo:
             images = self.apply_detection_model(image)
         else:
             images = self.apply_opencv_face(image)
+
         for bbox, face in images:
             face = preprocess_image(face)
             embedding = self.facenet_handler.forward(face.astype(np.float32))
-            self.Embeddings.add(bbox, embedding)
+            self.Embeddings.add(bbox.boxes[0], embedding)
         return self.Embeddings

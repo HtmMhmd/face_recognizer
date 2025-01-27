@@ -13,7 +13,7 @@ class YOLOv8:
     YOLOv8 object detector class.
     """
 
-    def __init__(self, path, conf_thres=0.7, iou_thres=0.5):
+    def __init__(self, path, conf_thres=0.7, iou_thres=0.5, verbose=False):
         """
         Initialize object detector.
 
@@ -24,6 +24,8 @@ class YOLOv8:
         """
         self.conf_threshold = conf_thres
         self.iou_threshold = iou_thres
+        self.verbose = verbose
+
         # Initialize model
         self.initialize_model(path)
 
@@ -114,8 +116,8 @@ class YOLOv8:
         """
         start = time.perf_counter()
         outputs = self.session.run(self.output_names, {self.input_names[0]: input_tensor})
-
-        print(f"Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
+        if self.verbose:
+            print(f"YOLO Model Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
         return outputs
 
     def process_output(self, output):

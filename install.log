@@ -1,8 +1,0 @@
-[03:15:02 2025-01-26] FETCHING Version 2.38.7
-[03:15:02 2025-01-26] DOWNLOADING https://github.com/spicetify/cli/releases/download/v2.38.7/spicetify-2.38.7-linux-amd64.tar.gz
-[03:16:02 2025-01-26] EXTRACTING /home/hatem/.spicetify/spicetify.tar.gz
-[03:16:02 2025-01-26] SETTING EXECUTABLE PERMISSIONS TO /home/hatem/.spicetify/spicetify
-[03:16:02 2025-01-26] REMOVING /home/hatem/.spicetify/spicetify.tar.gz
-[03:16:02 2025-01-26] spicetify path already set in /home/hatem/.bashrc, continuing...
-[03:16:02 2025-01-26] spicetify v2.38.7 was installed successfully to /home/hatem/.spicetify
-[03:16:02 2025-01-26] Run 'spicetify --help' to get started
