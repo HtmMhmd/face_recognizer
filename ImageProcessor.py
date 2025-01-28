@@ -8,12 +8,12 @@ from ImageUtilis.image_utilis import *
 
 # from Model.Detection.YoloDetector.YoloDetector import YOLOv8Detector
 from Model.Detection.detection_utilis import get_cropped_faces
-# from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
+from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
 from Model.Detection.OpencvDetector import OpencvDetector
 from Model.Detection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
 from Model.Embedding import *
 # from Model.FaceNet.Facenet import *
-from Model.FaceNet.Facenet import FaceNetTFLiteClient
+# from Model.FaceNet.Facenet import FaceNetTFLiteClient
 
 from UsersDatabaseHandeler.UsersDatabaseHandeler import EmbeddingCSVHandler
 
@@ -29,7 +29,7 @@ class ImageProcessor:
         """
         # Use YOLOv8 for detection if specified, otherwise use OpenCV
         self.use_yolo = use_yolo
-        self.facenet_handler = FaceNetTFLiteClient(verbose=True)
+        self.facenet_handler = FaceNetTFLiteHandler(verbose=True)
 
         # Initialize the detection model based on the use_yolo flag
         if self.use_yolo:

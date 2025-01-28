@@ -1,4 +1,3 @@
-
 import cv2
 from UsersDatabaseHandeler.UsersDatabaseHandeler import EmbeddingCSVHandler
 from ImageProcessor import ImageProcessor
@@ -83,7 +82,7 @@ if __name__ == "__main__":
 
     image_processor2 = ImageProcessor(use_yolo=True, verbose=False)
     print('Positive Test Case')
-    image_path2 = 'gallery_faces/gallery_13_1.jpg'
+    image_path2 = 'gallery_faces/gallery_13_2.jpg'
     results = image_processor2.verify_faces(image_path2)
     print(f"Results for image: {image_path2}")
     for result in results:

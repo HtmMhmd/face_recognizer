@@ -14,8 +14,7 @@ class FaceNetTFLiteHandler:
         self.verbose = verbose
 
     def forward(self, image: np.ndarray) -> np.ndarray:
-        input_tensor = preprocess_image(image)
-        self.interpreter.set_tensor(self.input_details[0]['index'], input_tensor)
+        self.interpreter.set_tensor(self.input_details[0]['index'], image)
         
         start_time = time.time()
         self.interpreter.invoke()
