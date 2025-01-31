@@ -50,15 +50,17 @@ def process_camera_handler(image_processor):
                 if len(embeddings) == 0:
                     print("No faces detected")
                     continue
+                
                 for item in embeddings:
                     bbox = item['bbox']
-                    cv2.rectangle(frame, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
+                    ff = frame.copy()
+                    cv2.rectangle(ff, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
                     
-                    # print("Bounding Box:", bbox)
-                    # print("Embedding:", item['embedding'])
-                    # print("-------------------------------------")
+                    print("Bounding Box:", bbox)
+                    print("Embedding:", item['embedding'])
+                    print("-------------------------------------")
             
-                cv2.imshow("YOLOv8 Detection", frame)
+                cv2.imshow("YOLOv8 Detection", ff)
                 frame = None
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -100,7 +102,7 @@ def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_p
 # Example usage
 if __name__ == "__main__":
     run_on_camera =True  # Set to True to run on camera feed, False to run on an image
-    use_camera_handler = False  # Set to True to use CameraHandler, False to use cv2.VideoCapture
+    use_camera_handler = True  # Set to True to use CameraHandler, False to use cv2.VideoCapture
     image_path = "istockphoto-507995592-612x612.jpg"  # Provide the path to your test image
     output_path = "output_image.jpg"  # Provide the path to save the processed image
     main(run_on_camera, use_camera_handler, image_path, output_path)

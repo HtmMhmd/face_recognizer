@@ -4,7 +4,7 @@ import time
 from threading import Thread
 
 ####-----------------------HYPERPARAMETERS----------------------------------------------------------
-RASPI_IP = '192.168.1.17'
+RASPI_IP = '192.168.4.103' # static ethernet IP address of the Raspberry Pi
 ####------------------------------------------------------------------------------------------------
 
 class VideoSaver:
