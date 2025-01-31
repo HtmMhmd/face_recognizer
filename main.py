@@ -102,11 +102,11 @@ def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_p
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Face recognition using YOLOv8 and FaceNet")
-    parser.add_argument("-roc","--run_on_camera", type=bool, default=True, help="Set to True to run on camera feed, False to run on an image")
-    parser.add_argument("-ch","--use_camera_handler", type=bool, default=True, help="Set to True to use CameraHandler, False to use cv2.VideoCapture")
+    parser.add_argument("-roc","--run_on_camera",action='store_true',default=False, help="Set to True to run on camera feed, False to run on an image")
+    parser.add_argument("-ch","--use_camera_handler", action='store_true', default=False, help="Set to True to use CameraHandler, False to use cv2.VideoCapture")
     parser.add_argument('-ip',"--image_path", type=str, default=None, help="Provide the path to your test image")
     parser.add_argument('-op',"--output_path", type=str, default=None, help="Provide the path to save the processed image")
 
     args = parser.parse_args()
-
+    print(args)
     main(args.run_on_camera, args.use_camera_handler, args.image_path, args.output_path)
