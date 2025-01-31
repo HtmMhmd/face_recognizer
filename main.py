@@ -1,4 +1,5 @@
 import cv2
+import argparse
 
 from CameraUtilis.CameraHandler import CameraHandler  # Import CameraHandler
 from ImageProcessor import *
@@ -99,10 +100,13 @@ def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_p
             raise ValueError("Image path and output path must be provided when run_on_camera is False")
         process_image_and_save(image_processor, image_path, output_path)
 
-# Example usage
 if __name__ == "__main__":
-    run_on_camera =True  # Set to True to run on camera feed, False to run on an image
-    use_camera_handler = True  # Set to True to use CameraHandler, False to use cv2.VideoCapture
-    image_path = "istockphoto-507995592-612x612.jpg"  # Provide the path to your test image
-    output_path = "output_image.jpg"  # Provide the path to save the processed image
-    main(run_on_camera, use_camera_handler, image_path, output_path)
+    parser = argparse.ArgumentParser(description="Face recognition using YOLOv8 and FaceNet")
+    parser.add_argument("-roc","--run_on_camera", type=bool, default=True, help="Set to True to run on camera feed, False to run on an image")
+    parser.add_argument("-ch","--use_camera_handler", type=bool, default=True, help="Set to True to use CameraHandler, False to use cv2.VideoCapture")
+    parser.add_argument('-ip',"--image_path", type=str, default=None, help="Provide the path to your test image")
+    parser.add_argument('-op',"--output_path", type=str, default=None, help="Provide the path to save the processed image")
+
+    args = parser.parse_args()
+
+    main(args.run_on_camera, args.use_camera_handler, args.image_path, args.output_path)
