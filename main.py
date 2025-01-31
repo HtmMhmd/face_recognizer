@@ -99,7 +99,7 @@ def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_p
 
 # Example usage
 if __name__ == "__main__":
-    run_on_camera = False  # Set to True to run on camera feed, False to run on an image
+    run_on_camera =True  # Set to True to run on camera feed, False to run on an image
     use_camera_handler = False  # Set to True to use CameraHandler, False to use cv2.VideoCapture
     image_path = "istockphoto-507995592-612x612.jpg"  # Provide the path to your test image
     output_path = "output_image.jpg"  # Provide the path to save the processed image
