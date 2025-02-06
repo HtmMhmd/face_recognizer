@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  face_recognizer:
+    # container_name: face_recognizer_container
+    # build: .
+    image: face_recognizer_container
+    environment:
+      - DISPLAY
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ./:/workspace/src/my_mtcnn_node:ro
+    devices:
+      - /dev/video0:/dev/video0
+    network_mode: host
+    ipc: host
+    stdin_open: true
+    tty: true
+    # command: 
+    #   - "/bin/bash"
