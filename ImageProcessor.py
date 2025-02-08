@@ -12,6 +12,7 @@ from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
 from Model.Detection.OpencvDetector import OpencvDetector
 from Model.Detection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
 from Model.Landmark.Landmarker import FaceMeshDetector
+from Model.Landmark.Facedetector import MediapipeFaceDetector
 from Model.Landmark.utilis import draw_landmarks
 from Model.Detection.detection_utilis import draw_detections
 from Model.Embedding import *
@@ -32,12 +33,12 @@ class ImageProcessor:
         """
         # Use YOLOv8 for detection if specified, otherwise use OpenCV
         self.use_yolo = use_yolo
-        self.facenet_handler = FaceNetTFLiteHandler(verbose=True)
-        self.face_mesh_detector = FaceMeshDetector()
+        self.facenet_handler = FaceNetTFLiteHandler(verbose=verbose)
+        self.face_mesh_detector = FaceMeshDetector(verbose=verbose)
 
         # Initialize the detection model based on the use_yolo flag
         if self.use_yolo:
-            self.detection_model = Yolov8OnnxRuntimeDetector(verbose=verbose)
+            self.detection_model = MediapipeFaceDetector(verbose=verbose)
         else:
             self.detection_model = OpencvDetector()
 

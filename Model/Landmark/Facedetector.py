@@ -1,15 +1,23 @@
 import cv2
 import mediapipe as mp
+import time
 from Model.Detection.DetectionResult import DetectionResult
 from Model.FaceDetection import FaceDetector
 
 class MediapipeFaceDetector(FaceDetector):
-    def __init__(self, min_detection_conf=0.5):
+    def __init__(self, min_detection_conf=0.5, verbose=False):
         self.mp_face_detection = mp.solutions.face_detection
         self.face_detection = self.mp_face_detection.FaceDetection(min_detection_conf)
+        self.verbose = verbose
 
     def detect_faces(self, image):
+        start_time = time.time()
         results = self.face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        inference_time = time.time() - start_time
+
+        if self.verbose:
+            print(f"MediapipeFaceDetector Inference Time: {inference_time * 1000:.2f} ms")
+
         detection_result = DetectionResult()
         if results.detections:
             for detection in results.detections:
