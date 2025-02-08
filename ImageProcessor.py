@@ -11,6 +11,9 @@ from Model.Detection.detection_utilis import get_cropped_faces
 from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
 from Model.Detection.OpencvDetector import OpencvDetector
 from Model.Detection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
+from Model.Landmark.Landmarker import FaceMeshDetector
+from Model.Landmark.utilis import draw_landmarks
+from Model.Detection.detection_utilis import draw_detections
 from Model.Embedding import *
 # from Model.FaceNet.Facenet import *
 # from Model.FaceNet.Facenet import FaceNetTFLiteClient
@@ -30,6 +33,7 @@ class ImageProcessor:
         # Use YOLOv8 for detection if specified, otherwise use OpenCV
         self.use_yolo = use_yolo
         self.facenet_handler = FaceNetTFLiteHandler(verbose=True)
+        self.face_mesh_detector = FaceMeshDetector()
 
         # Initialize the detection model based on the use_yolo flag
         if self.use_yolo:
@@ -37,8 +41,7 @@ class ImageProcessor:
         else:
             self.detection_model = OpencvDetector()
 
-        # Initialize the embedding container to store face embeddings
-        self.Embeddings = EmbeddingContainer()
+
 
     def apply_detection_model(self, image: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
         """
@@ -86,7 +89,8 @@ class ImageProcessor:
         Returns:
             An EmbeddingContainer containing the face embeddings.
         """
-        
+        # Initialize the embedding container to store face embeddings
+        self.Embeddings = EmbeddingContainer()
         # Load the image if a file path is provided
         if isinstance(image, str) and os.path.isfile(image):
             image = cv2.imread(image)
@@ -121,6 +125,19 @@ class ImageProcessor:
             self.Embeddings.add(bbox.boxes[0], embedding)
 
         return self.Embeddings
+
+    def detect_landmarks(self, image):
+        """
+        Detects facial landmarks in the given image.
+
+        Args:
+            image: The input image.
+
+        Returns:
+            The image with landmarks drawn on it.
+        """
+        landmarks = self.face_mesh_detector.get_landmarks(image)
+        return landmarks
     
     def verify_faces(self, image) -> List[dict]:
         """

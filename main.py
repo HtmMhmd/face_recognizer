@@ -3,6 +3,8 @@ import argparse
 
 from CameraUtilis.CameraHandler import CameraHandler  # Import CameraHandler
 from ImageProcessor import *
+from Model.Detection.detection_utilis import draw_detections
+from Model.Landmark.utilis import draw_landmarks
 
 # Function to process camera feed using cv2.VideoCapture
 def process_camera_feed(image_processor):
@@ -25,14 +27,21 @@ def process_camera_feed(image_processor):
             for item in embeddings:
                 bbox = item['bbox']
                 ff = frame.copy()
-                cv2.rectangle(ff, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
+                # cv2.rectangle(ff, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
 
                 print("Bounding Box:", bbox)
-                print("Embedding:", item['embedding'])
+                print("Embedding:", item['embedding'][0:3])
                 print("-------------------------------------")
 
-            cv2.imshow("YOLOv8 Detection", ff)
-            frame = None
+            # Run landmark detection on the frame
+            landmarks = image_processor.detect_landmarks(ff)
+            draw_landmarks(ff, landmarks)
+
+            # Draw detections on the frame
+            ff = draw_detections(ff, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
+
+            cv2.imshow("YOLOv8 Detection with Landmarks", ff)
+            ff = None
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -55,14 +64,21 @@ def process_camera_handler(image_processor):
                 for item in embeddings:
                     bbox = item['bbox']
                     ff = frame.copy()
-                    cv2.rectangle(ff, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
+                    # cv2.rectangle(ff, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
                     
                     print("Bounding Box:", bbox)
-                    print("Embedding:", item['embedding'])
+                    print("Embedding:", item['embedding'][0:3])
                     print("-------------------------------------")
             
-                cv2.imshow("YOLOv8 Detection", ff)
-                frame = None
+                # Run landmark detection on the frame
+                landmarks = image_processor.detect_landmarks(ff)
+                draw_landmarks(ff, landmarks)
+
+                # Draw detections on the frame
+                ff = draw_detections(ff, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
+
+                cv2.imshow("YOLOv8 Detection with Landmarks", ff)
+                ff = None
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
     finally:
@@ -83,7 +99,14 @@ def process_image_and_save(image_processor, image_path, output_path):
             bbox = item['bbox']
             cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
 
-        cv2.imwrite(output_path, image)
+        # Run landmark detection on the image
+        landmarks = image_processor.detect_landmarks(image)
+        image_with_landmarks = draw_landmarks(image, landmarks)
+
+        # Draw detections on the image
+        image_with_detections = draw_detections(image_with_landmarks, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
+
+        cv2.imwrite(output_path, image_with_detections)
         print(f"Processed image saved to {output_path}")
 
 # Main function
