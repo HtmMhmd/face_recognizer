@@ -108,5 +108,4 @@ if __name__ == "__main__":
     parser.add_argument('-op',"--output_path", type=str, default=None, help="Provide the path to save the processed image")
 
     args = parser.parse_args()
-    print(args)
     main(args.run_on_camera, args.use_camera_handler, args.image_path, args.output_path)
