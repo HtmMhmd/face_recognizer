@@ -6,6 +6,12 @@ from ImageProcessor import *
 from Model.Detection.detection_utilis import draw_detections
 from Model.Landmark.utilis import draw_landmarks
 
+# Function to resize the frame to a specified width while maintaining the aspect ratio
+def resize_frame(frame, width=360):
+    aspect_ratio = frame.shape[1] / frame.shape[0]
+    height = int(width / aspect_ratio)
+    return cv2.resize(frame, (width, height))
+
 # Function to process camera feed using cv2.VideoCapture
 def process_camera_feed(image_processor):
     cap = cv2.VideoCapture(0)  # Use the appropriate camera index
@@ -19,6 +25,9 @@ def process_camera_feed(image_processor):
             if not ret:
                 print("Failed to grab frame")
                 break
+
+            # Resize the frame
+            frame = resize_frame(frame)
 
             embeddings = image_processor.process_image(frame)
             if len(embeddings) == 0:
@@ -56,6 +65,9 @@ def process_camera_handler(image_processor):
         while True:
             timestamp, frame = camera.read()
             if frame is not None:
+                # Resize the frame
+                frame = resize_frame(frame)
+
                 embeddings = image_processor.process_image(frame)
                 if len(embeddings) == 0:
                     print("No faces detected")
@@ -90,6 +102,9 @@ def process_image_and_save(image_processor, image_path, output_path):
     image = cv2.imread(image_path)
     if image is None:
         raise FileNotFoundError(f"Image not found at {image_path}")
+
+    # Resize the image
+    image = resize_frame(image)
 
     embeddings = image_processor.process_image(image)
     if len(embeddings) == 0:
