@@ -2,7 +2,7 @@ import cv2
 import ultralytics
 import numpy as np
 from Model.FaceDetection import FaceDetector
-from Model.Detection.YoloDetectionResult import YoloDetectionResult
+from Model.Detection.DetectionResult import DetectionResult
 from Model.Detection.detection_utilis import draw_detections
 
 class Yolov8Detector(FaceDetector):
@@ -22,7 +22,7 @@ class Yolov8Detector(FaceDetector):
         results = self.model(image, conf = 0.6, iou = 0.5)
         print(results[0].boxes.conf.cpu())
         # boxes = results[0].boxes.xyxy.cpu().numpy()  # Get bounding boxes
-        self.results = YoloDetectionResult()
+        self.results = DetectionResult()
         if len(results[0].boxes.conf.cpu()) > 0:           
             for result in results:
                 # print(result.boxes.xyxy.cpu().numpy())

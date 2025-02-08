@@ -5,9 +5,9 @@ sudo docker run -it --rm --device=/dev/video0 --network=host --ipc=host face_rec
 
 pc
 
-xhost +
+xhost +local:docker
 
-sudo docker run -it --rm --env=DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --device=/dev/video0:/dev/video0 --network=host --ipc=host face_recognizer_container
+sudo docker run -it --rm --env=DISPLAY --volume /tmp/.X11-unix:/tmp/.X11-unix:rw --device=/dev/video0:/dev/video0 --network=host --ipc=host -v $(pwd):/workspace/src/my_mtcnn_node:ro face_recognizer_container
 
 
 open stream 
@@ -21,3 +21,12 @@ http://192.168.4.103:8080/
 docker build
 
 sudo docker build -t face_recognizer_container .
+
+
+=================================================================
+
+Docker-Compose 
+
+execute in bash 
+
+docker exec -it face_recognizer_container_face_recognizer_1 bash

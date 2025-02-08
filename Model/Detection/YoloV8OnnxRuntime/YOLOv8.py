@@ -5,7 +5,7 @@ import onnxruntime
 
 from Model.Detection.YoloV8OnnxRuntime.utils import xywh2xyxy, nms
 from Model.Detection.detection_utilis import draw_detections
-from Model.Detection.YoloDetectionResult import YoloDetectionResult
+from Model.Detection.DetectionResult import DetectionResult
 
 class YOLOv8:
 
@@ -71,7 +71,7 @@ class YOLOv8:
 
         self.boxes, self.scores, self.class_ids = self.process_output(outputs)
         
-        self.results = YoloDetectionResult()
+        self.results = DetectionResult()
 
         self.results.boxes = self.boxes
         self.results.scores = self.scores

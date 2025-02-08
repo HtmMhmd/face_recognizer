@@ -1,13 +1,15 @@
 import cv2
 # from ultralytics import YOLO
 from Model.Detection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
+from Model.Landmark.Facedetector import MediapipeFaceDetector
+from Model.Landmark.Landmarker import FaceMeshDetector
 from Model.Detection.detection_utilis import draw_detections
+from Model.Landmark.utilis import draw_landmarks
 # from Model.Detection.YoloDetector.YoloDetector import Yolov8Detector
 
-# Load the YOLOv8 model
-# model = YOLO("Model/Detection/YoloDetector/yolov8n-face(2).pt")  # Ensure you have the correct model file
-
-model = Yolov8OnnxRuntimeDetector()  # Ensure you have the correct model file
+# Initialize the face detector and face mesh detector
+face_detector = MediapipeFaceDetector()
+face_mesh_detector = FaceMeshDetector()
 
 # Open the video capture
 cap = cv2.VideoCapture(0)  # Use the appropriate camera index
@@ -23,19 +25,22 @@ try:
             print("Failed to grab frame")
             break
         
-        # Run YOLOv8 model on the frame
-        results = model.detect_faces(frame)
-        # Check if results is not empty
-        if len(results)>0:
-            # Render the results on the frame
-            # annotated_frame = results[0]
-            # print(annotated_frame.boxes)
-            # print(annotated_frame.keypoints)
-            for obj in results:
-                image = draw_detections(frame, obj.boxes, obj.scores, obj.class_ids)
-            cv2.imshow("YOLOv8 Detection", image)
+        # Run face detection on the frame
+        detection_results = face_detector.detect_faces(frame)
+        
+        # Check if detection results are not empty
+        if detection_results.boxes:
+            # Draw the detection results
+            image_with_bbox = draw_detections(frame, detection_results.boxes, detection_results.scores, detection_results.class_ids)
         else:
-            cv2.imshow("YOLOv8 Detection", frame)
+            image_with_bbox = frame
+
+        # Run face mesh detection on the frame
+        landmarks = face_mesh_detector.get_landmarks(frame)
+        draw_landmarks(image_with_bbox, landmarks)
+
+        # Display the frame with detections and landmarks
+        cv2.imshow("YOLOv8 Detection with Landmarks", cv2.flip(image_with_bbox, 1))
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break

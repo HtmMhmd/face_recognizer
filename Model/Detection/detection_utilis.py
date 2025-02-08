@@ -36,7 +36,7 @@ def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3):
     for box, score, class_id in zip(boxes, scores, class_ids):
         color = colors[class_id]
 
-        x1, y1, x2, y2 = box.astype(int)
+        x1, y1, x2, y2 = np.uint16(box)
 
         # Draw rectangle
         cv2.rectangle(det_img, (x1, y1), (x2, y2), color, 2)
