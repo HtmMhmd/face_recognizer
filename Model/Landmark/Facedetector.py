@@ -6,11 +6,27 @@ from Model.FaceDetection import FaceDetector
 
 class MediapipeFaceDetector(FaceDetector):
     def __init__(self, min_detection_conf=0.5, verbose=False):
+        """
+        Initializes the MediapipeFaceDetector with the specified minimum detection confidence.
+
+        Args:
+            min_detection_conf (float): The minimum confidence value ([0.0, 1.0]) from the face detection model for the detection to be considered successful. Defaults to 0.5.
+            verbose (bool): Enables verbose output for debugging. Defaults to False.
+        """
         self.mp_face_detection = mp.solutions.face_detection
         self.face_detection = self.mp_face_detection.FaceDetection(min_detection_conf)
         self.verbose = verbose
 
     def detect_faces(self, image):
+        """
+        Processes the input image to detect faces using the MediaPipe face detection model.
+
+        Args:
+            image (np.ndarray): The input image in which faces are to be detected.
+
+        Returns:
+            A DetectionResult object containing the detected faces.
+        """
         start_time = time.time()
         results = self.face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         inference_time = time.time() - start_time
