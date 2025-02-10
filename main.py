@@ -7,10 +7,9 @@ from Model.Detection.detection_utilis import draw_detections
 from Model.Landmark.utilis import draw_landmarks
 
 # Function to resize the frame to a specified width while maintaining the aspect ratio
-def resize_frame(frame, width=360):
-    aspect_ratio = frame.shape[1] / frame.shape[0]
-    height = int(width / aspect_ratio)
-    return cv2.resize(frame, (width, height))
+def resize_frame(frame, width=640, height = 480):
+
+    return cv2.resize(frame, (int(width), int(height)))
 
 # Function to process camera feed using cv2.VideoCapture
 def process_camera_feed(image_processor):
@@ -44,12 +43,12 @@ def process_camera_feed(image_processor):
 
             # Run landmark detection on the frame
             landmarks = image_processor.detect_landmarks(ff)
-            draw_landmarks(ff, landmarks)
+            image_with_landark = draw_landmarks(ff, landmarks)
 
             # Draw detections on the frame
-            ff = draw_detections(ff, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
+            image_with_landark = draw_detections(image_with_landark, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
 
-            cv2.imshow("YOLOv8 Detection with Landmarks", ff)
+            cv2.imshow("YOLOv8 Detection with Landmarks", image_with_landark)
             ff = None
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -84,12 +83,12 @@ def process_camera_handler(image_processor):
             
                 # Run landmark detection on the frame
                 landmarks = image_processor.detect_landmarks(ff)
-                draw_landmarks(ff, landmarks)
+                image_with_landark =draw_landmarks(ff, landmarks)
 
                 # Draw detections on the frame
-                ff = draw_detections(ff, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
+                image_with_landark = draw_detections(image_with_landark, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
 
-                cv2.imshow("YOLOv8 Detection with Landmarks", ff)
+                cv2.imshow("YOLOv8 Detection with Landmarks", image_with_landark)
                 ff = None
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -103,17 +102,18 @@ def process_image_and_save(image_processor, image_path, output_path):
     if image is None:
         raise FileNotFoundError(f"Image not found at {image_path}")
 
-    # Resize the image
-    image = resize_frame(image)
-    
     embeddings = image_processor.process_image(image)
     if len(embeddings) == 0:
         print("No faces detected")
     else:
+        for item in embeddings:
+            bbox = item['bbox']
+            cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
+
         # Run landmark detection on the image
         landmarks = image_processor.detect_landmarks(image)
-        print(image)
         image_with_landmarks = draw_landmarks(image, landmarks)
+
         # Draw detections on the image
         image_with_detections = draw_detections(image_with_landmarks, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
 

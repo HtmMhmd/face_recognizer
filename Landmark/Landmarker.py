@@ -1,7 +1,6 @@
 import cv2
 import mediapipe as mp
 from typing import Tuple, Union, Dict, List
-# from Model.Detection.DetectionResult import DetectionResult
 
 class FaceMeshDetector:
     def __init__(self, max_faces=1, min_detection_conf=0.5, min_tracking_conf=0.5):
@@ -24,7 +23,7 @@ class FaceMeshDetector:
             "right_eye": [],
             "mouth": []
         }
-        h, w, _ = image_shape
+        h, w = image_shape
 
         LEFT_EYE_INDICES = [33, 133, 160, 144, 158, 153]
         RIGHT_EYE_INDICES = [362, 263, 387, 373, 380, 374]
