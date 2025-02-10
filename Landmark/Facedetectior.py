@@ -5,10 +5,12 @@ from Model.FaceDetection import FaceDetector
 
 class MediapipeFaceDetector(FaceDetector):
     def __init__(self, min_detection_conf=0.5):
+        
         self.mp_face_detection = mp.solutions.face_detection
         self.face_detection = self.mp_face_detection.FaceDetection(min_detection_conf)
 
     def detect_faces(self, image):
+        
         results = self.face_detection.process(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         detection_result = DetectionResult()
         if results.detections:
