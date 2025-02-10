@@ -80,7 +80,7 @@ class ImageProcessor:
         zip_results = list(zip(results, image_cropped))
         return zip_results
 
-    def process_image(self, image):
+    def process_image(self, image_org):
         """
         Processes an image to detect faces and extract embeddings.
 
@@ -90,6 +90,7 @@ class ImageProcessor:
         Returns:
             An EmbeddingContainer containing the face embeddings.
         """
+        image = image_org.copy()
         # Initialize the embedding container to store face embeddings
         self.Embeddings = EmbeddingContainer()
         # Load the image if a file path is provided

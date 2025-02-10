@@ -2,7 +2,7 @@ import cv2
 import ultralytics
 import numpy as np
 from Model.FaceDetection import FaceDetector
-from Model.Detection.DetectionResult import DetectionResult
+from Model.DetectionResult import DetectionResult
 from Model.Detection.detection_utilis import draw_detections
 
 class Yolov8Detector(FaceDetector):

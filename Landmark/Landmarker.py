@@ -2,7 +2,6 @@ import cv2
 import mediapipe as mp
 from typing import Tuple, Union, Dict, List
 # from Model.Detection.DetectionResult import DetectionResult
-from Landmark.Facedetector import MediapipeFaceDetector
 
 class FaceMeshDetector:
     def __init__(self, max_faces=1, min_detection_conf=0.5, min_tracking_conf=0.5):

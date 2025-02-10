@@ -105,19 +105,15 @@ def process_image_and_save(image_processor, image_path, output_path):
 
     # Resize the image
     image = resize_frame(image)
-
+    
     embeddings = image_processor.process_image(image)
     if len(embeddings) == 0:
         print("No faces detected")
     else:
-        for item in embeddings:
-            bbox = item['bbox']
-            cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
-
         # Run landmark detection on the image
         landmarks = image_processor.detect_landmarks(image)
+        print(image)
         image_with_landmarks = draw_landmarks(image, landmarks)
-
         # Draw detections on the image
         image_with_detections = draw_detections(image_with_landmarks, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
 

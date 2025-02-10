@@ -1,7 +1,7 @@
 import cv2
 import mediapipe as mp
 import time
-from Model.Detection.DetectionResult import DetectionResult
+from Model.DetectionResult import DetectionResult
 from Model.FaceDetection import FaceDetector
 
 class MediapipeFaceDetector(FaceDetector):
