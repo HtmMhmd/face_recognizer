@@ -14,6 +14,7 @@ class FaceMeshDetector:
         )
 
     def get_landmarks(self, image):
+        print("Image shape: ", image.shape)
         results = self.face_mesh.process(image)
         return results
 
