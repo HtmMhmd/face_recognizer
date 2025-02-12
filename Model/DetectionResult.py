@@ -4,6 +4,7 @@ class DetectionResult:
         self.scores = scores if scores is not None else []
         self.class_ids = class_ids if class_ids is not None else []
         self.names = 'Face'
+        self.n_faces = 0
 
     def __getitem__(self, index):
         if isinstance(index, int):
@@ -28,6 +29,16 @@ class DetectionResult:
         return f"DetectionResult(boxes={self.boxes}, scores={self.scores}, class_ids={self.class_ids})"
 
     def add(self, box, score, class_id):
-        self.boxes.append(box)
-        self.scores.append(score)
-        self.class_ids.append(class_id)
+        if (box is not None )and (score is not None) and (class_id is not None):    
+            self.n_faces += 1
+            self.boxes.append(box)
+            self.scores.append(score)
+            self.class_ids.append(class_id)
+        else:
+            raise ValueError("box, score and class_id must not be None")
+    
+    def reset(self):
+        self.boxes = []
+        self.scores = []
+        self.class_ids = []
+        self.n_faces = 0
