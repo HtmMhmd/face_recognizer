@@ -3,7 +3,7 @@ import argparse
 
 from CameraUtilis.CameraHandler import CameraHandler  # Import CameraHandler
 from ImageProcessor import *
-from Model.Detection.detection_utilis import draw_detections
+from Model.detection_utilis import draw_detections
 from Model.Landmark.utilis import draw_landmarks
 
 # Function to resize the frame to a specified width while maintaining the aspect ratio

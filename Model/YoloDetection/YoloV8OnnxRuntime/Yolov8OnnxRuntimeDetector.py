@@ -1,6 +1,4 @@
-import cv2
-import numpy as np
-from Model.Detection.YoloV8OnnxRuntime.YOLOv8 import YOLOv8
+from Model.YoloDetection.YoloV8OnnxRuntime.YOLOv8 import YOLOv8
 from Model.FaceDetection import FaceDetector
 
 class Yolov8OnnxRuntimeDetector(FaceDetector):

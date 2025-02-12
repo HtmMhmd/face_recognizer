@@ -7,14 +7,14 @@ from Align.Align import FaceAligner
 from ImageUtilis.image_utilis import *
 
 # from Model.Detection.YoloDetector.YoloDetector import YOLOv8Detector
-from Model.Detection.detection_utilis import get_cropped_faces
+from Model.detection_utilis import get_cropped_faces
 from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
-from Model.Detection.OpencvDetector import OpencvDetector
-from Model.Detection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
+from Model.OpencvDetector import OpencvDetector
+from Model.YoloDetection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
 from Model.Landmark.Landmarker import FaceMeshDetector
 from Model.Landmark.Facedetector import MediapipeFaceDetector
 from Model.Landmark.utilis import draw_landmarks
-from Model.Detection.detection_utilis import draw_detections
+from Model.detection_utilis import draw_detections
 from Model.Embedding import *
 # from Model.FaceNet.Facenet import *
 # from Model.FaceNet.Facenet import FaceNetTFLiteClient

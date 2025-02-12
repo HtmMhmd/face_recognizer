@@ -3,8 +3,8 @@ import cv2
 import numpy as np
 import onnxruntime
 
-from Model.Detection.YoloV8OnnxRuntime.utils import xywh2xyxy, nms
-from Model.Detection.detection_utilis import draw_detections
+from Model.YoloDetection.YoloV8OnnxRuntime.utils import xywh2xyxy, nms
+from Model.detection_utilis import draw_detections
 from Model.DetectionResult import DetectionResult
 
 class YOLOv8:

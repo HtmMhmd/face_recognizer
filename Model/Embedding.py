@@ -12,10 +12,12 @@ class Embedding:
             raise KeyError(f"Invalid key: {key}")
 
 class EmbeddingContainer:
-    def __init__(self):
+    def __init__(self, bbox=None, embedding=None):
         """
         Initializes an empty EmbeddingContainer contains a list of bbox and embedding objects.
         """
+        self.bbox = bbox
+        self.embedding = embedding
         self.embeddings = []  # List of Embedding objects
 
     def add(self, bbox, embedding):
