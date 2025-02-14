@@ -71,7 +71,7 @@ class FaceVerifier:
                 "threshold": threshold,
                 "metric": metric,
             }
-
+            # results["verified"] = verified
         # Print results if verbose is True
         if verbose:
             self.print_results(results)

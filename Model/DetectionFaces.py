@@ -1,11 +1,11 @@
 from Model.DetectionResult import DetectionResult
 
-class DetectionFaces:
+class DetectionFaces(DetectionResult):
     def __init__(self):
         """
         Initializes an empty DetectionFaces object containing a DetectionResult object and a list of cropped face images.
         """
-        self.detection_result = DetectionResult()
+        super().__init__()
         self.cropped_faces = []
 
     def add(self, box, score, class_id, cropped_face):
@@ -18,37 +18,32 @@ class DetectionFaces:
             class_id (int): The class ID of the detected face.
             cropped_face (np.ndarray): The cropped face image.
         """
-        self.detection_result.add(box, score, class_id)
+        super().add(box, score, class_id)
         self.cropped_faces.append(cropped_face)
 
-    def __getitem__(self, index):
+    def __getitem__(self, key):
         """
-        Accesses the DetectionResult and cropped face image by index.
+        Accesses the DetectionResult and cropped face image by index or key.
 
         Args:
-            index (int): The index of the detected face.
+            key (int or str): The index of the detected face or the key for accessing attributes.
 
         Returns:
-            tuple: A tuple containing the DetectionResult object and the cropped face image at the specified index.
+            tuple or list: A tuple containing the DetectionResult object and the cropped face image at the specified index, or a list of attributes.
         """
-        if isinstance(index, int):
-            return self.detection_result[index], self.cropped_faces[index]
+        if isinstance(key, int):
+            return super().__getitem__(key), self.cropped_faces[key]
+        elif isinstance(key, str):
+            if key == "cropped_faces":
+                return self.cropped_faces
+            else:
+                return super().__getitem__(key)
         else:
-            raise TypeError("Index must be an integer")
+            raise TypeError("Index must be an integer or string")
 
     def reset(self):
         """
         Resets the DetectionFaces object, clearing all detected faces and cropped face images.
         """
-        self.detection_result.reset()
+        super().reset()
         self.cropped_faces = []
-
-    @property
-    def n_faces(self):
-        """
-        Returns the number of detected faces.
-
-        Returns:
-            int: The number of detected faces.
-        """
-        return self.detection_result.n_faces

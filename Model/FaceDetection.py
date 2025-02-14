@@ -21,3 +21,15 @@ class FaceDetector(ABC):
         """
         pass
 
+    @abstractmethod
+    def draw_detections(self, image):
+        """
+        Draws bounding boxes on the detected faces in the image.
+
+        Args:
+            image: The input image (as a NumPy array).
+
+        Returns:
+            A copy of the input image with bounding boxes drawn around the detected faces.
+        """
+        pass

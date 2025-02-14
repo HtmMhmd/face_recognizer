@@ -19,12 +19,25 @@ def get_cropped_faces(image, boxes):
     cropped_faces = []
     if (boxes is not None) and (len(boxes) >= 1):
         for box in boxes:
-            x_min, y_min, x_max, y_max  = map(int, box.boxes[0])
+            x_min, y_min, x_max, y_max  = box
             cropped_face = image[y_min:y_max, x_min:x_max]
             cropped_faces.append(cropped_face)
-    return cropped_faces
+    return np.array(cropped_faces, dtype='float32')
 
 def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3):
+    """
+    Draws bounding boxes and labels of detections on the input image.
+
+    Args:
+        image: The input image (as a NumPy array).
+        boxes: Bounding boxes of detections (as a NumPy array).
+        scores: Scores of detections (as a NumPy array).
+        class_ids: Class IDs of detections (as a NumPy array).
+        mask_alpha: Alpha value of the bounding box mask image (default is 0.3).
+
+    Returns:
+        An image with the bounding boxes and labels of detections drawn on it.
+    """
     mask_img = image.copy()
     det_img = image.copy()
 
@@ -95,3 +108,7 @@ def draw_comparison(img1, img2, name1, name2, fontsize=2.6, text_thickness=3):
         combined_img = cv2.resize(combined_img, (3840, 2160))
 
     return combined_img
+
+# def resize_frame(frame, width=640, height=480):
+#     return cv2.resize(frame, (int(width), int(height)))
+

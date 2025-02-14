@@ -1,6 +1,7 @@
 import mediapipe as mp
 import time
 from typing import Tuple, Dict, List
+from Model.MediapipeDetection.mediapipe_utilis import draw_landmarks
 
 class FaceMeshDetector:
     def __init__(self, max_faces=1, min_detection_conf=0.5, min_tracking_conf=0.5, verbose=False):
@@ -23,8 +24,9 @@ class FaceMeshDetector:
             min_tracking_confidence=min_tracking_conf
         )
         self.verbose = verbose
+        self.landmarks = None
 
-    def get_landmarks(self, image):
+    def landmark(self, image):
         """
         Processes the input image to detect facial landmarks.
 
@@ -36,13 +38,13 @@ class FaceMeshDetector:
             the detected facial landmarks.
         """
         start_time = time.time()
-        results = self.face_mesh.process(image)
+        self.landmarks = self.face_mesh.process(image)
         inference_time = time.time() - start_time
 
         if self.verbose:
             print(f"FaceMeshDetector Inference Time: {inference_time * 1000:.2f} ms")
 
-        return results
+        return self.landmarks
 
     def get_eye_mouth_keypoints(self, face_landmarks, image_shape) -> Dict[str, List[Tuple[int, int]]]:
         """
@@ -81,3 +83,16 @@ class FaceMeshDetector:
                 eye_mouth_keypoints["mouth"].append((cx, cy))
 
         return eye_mouth_keypoints
+
+    def draw_landmarks(self, image):
+        """
+        Draws landmarks on the detected faces in the image.
+
+        Args:
+            image (np.ndarray): The input image.
+            landmarks: The landmarks detected by MediaPipe.
+
+        Returns:
+            np.ndarray: The image with landmarks drawn.
+        """
+        return draw_landmarks(image, self.landmarks)

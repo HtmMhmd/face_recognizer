@@ -2,14 +2,7 @@ import cv2
 import argparse
 
 from CameraUtilis.CameraHandler import CameraHandler  # Import CameraHandler
-from ImageProcessor import *
-from Model.detection_utilis import draw_detections
-from Model.Landmark.utilis import draw_landmarks
-
-# Function to resize the frame to a specified width while maintaining the aspect ratio
-def resize_frame(frame, width=640, height = 480):
-
-    return cv2.resize(frame, (int(width), int(height)))
+from ImageProcessor import ImageProcessor
 
 # Function to process camera feed using cv2.VideoCapture
 def process_camera_feed(image_processor):
@@ -26,30 +19,29 @@ def process_camera_feed(image_processor):
                 break
 
             # Resize the frame
-            frame = resize_frame(frame)
+            frame = cv2.resize(frame, (480,360))
 
             embeddings = image_processor.process_image(frame)
             if len(embeddings) == 0:
                 print("No faces detected")
-                continue
-            for item in embeddings:
-                bbox = item['bbox']
-                ff = frame.copy()
-                # cv2.rectangle(ff, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
+                image_with_landmarks = frame
+            else:
+                for item_index in range(len(embeddings)):
+                    bbox = embeddings['boxes'][item_index]
+                    ff = frame.copy()
 
-                print("Bounding Box:", bbox)
-                print("Embedding:", item['embedding'][0:3])
-                print("-------------------------------------")
+                    print("Bounding Box:", bbox)
+                    print("Embedding:", embeddings['embeddings'][item_index][0:3])
+                    print("-------------------------------------")
 
-            # Run landmark detection on the frame
-            landmarks = image_processor.detect_landmarks(ff)
-            image_with_landark = draw_landmarks(ff, landmarks)
+                # Run face detection on the frame
+                image_with_detections = image_processor.draw_detections(ff)
 
-            # Draw detections on the frame
-            image_with_landark = draw_detections(image_with_landark, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
+                # Run landmark detection on the frame
+                landmarks = image_processor.detect_landmarks(ff)
+                image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
 
-            cv2.imshow("YOLOv8 Detection with Landmarks", image_with_landark)
-            ff = None
+            cv2.imshow("Detection with Landmarks", image_with_landmarks)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -65,30 +57,29 @@ def process_camera_handler(image_processor):
             timestamp, frame = camera.read()
             if frame is not None:
                 # Resize the frame
-                frame = resize_frame(frame)
+                frame = cv2.resize(frame, (480,360))
 
                 embeddings = image_processor.process_image(frame)
                 if len(embeddings) == 0:
                     print("No faces detected")
                     continue
-                
-                for item in embeddings:
-                    bbox = item['bbox']
+
+                for item_index in range(len(embeddings)):
+                    bbox = embeddings['boxes'][item_index]
                     ff = frame.copy()
-                    # cv2.rectangle(ff, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
-                    
+
                     print("Bounding Box:", bbox)
-                    print("Embedding:", item['embedding'][0:3])
+                    print("Embedding:", embeddings['embeddings'][item_index][0:3])
                     print("-------------------------------------")
-            
+
+                # Run face detection on the frame
+                image_with_detections = image_processor.draw_detections(ff)
+
                 # Run landmark detection on the frame
                 landmarks = image_processor.detect_landmarks(ff)
-                image_with_landark =draw_landmarks(ff, landmarks)
+                image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
 
-                # Draw detections on the frame
-                image_with_landark = draw_detections(image_with_landark, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
-
-                cv2.imshow("YOLOv8 Detection with Landmarks", image_with_landark)
+                cv2.imshow("Detection with Landmarks", image_with_landmarks)
                 ff = None
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
@@ -110,19 +101,21 @@ def process_image_and_save(image_processor, image_path, output_path):
             bbox = item['bbox']
             cv2.rectangle(image, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
 
-        # Run landmark detection on the image
+        # Run face detection on the image
+        detection_faces = image_processor.detect(image)
+        # Run face detection on the frame
+        image_with_detections = image_processor.draw_detections(image)
+
+        # Run landmark detection on the frame
         landmarks = image_processor.detect_landmarks(image)
-        image_with_landmarks = draw_landmarks(image, landmarks)
+        image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
 
-        # Draw detections on the image
-        image_with_detections = draw_detections(image_with_landmarks, [item['bbox'] for item in embeddings], [1.0] * len(embeddings), [0] * len(embeddings))
-
-        cv2.imwrite(output_path, image_with_detections)
+        cv2.imwrite(output_path, image_with_landmarks)
         print(f"Processed image saved to {output_path}")
 
 # Main function
-def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_path=None):
-    image_processor = ImageProcessor(use_yolo=True, verbose=True)
+def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_path=None, detector_type='mediapipe'):
+    image_processor = ImageProcessor(model_architecture=detector_type, verbose=True)
 
     if run_on_camera:
         if use_camera_handler:
@@ -140,6 +133,7 @@ if __name__ == "__main__":
     parser.add_argument("-ch","--use_camera_handler", action='store_true', default=False, help="Set to True to use CameraHandler, False to use cv2.VideoCapture")
     parser.add_argument('-ip',"--image_path", type=str, default=None, help="Provide the path to your test image")
     parser.add_argument('-op',"--output_path", type=str, default=None, help="Provide the path to save the processed image")
+    parser.add_argument('-dt',"--detector_type", type=str, default='mediapipe', help="Type of detector to use ('yolov8_onnx', 'yolov8', 'mediapipe')")
 
     args = parser.parse_args()
-    main(args.run_on_camera, args.use_camera_handler, args.image_path, args.output_path)
+    main(args.run_on_camera, args.use_camera_handler, args.image_path, args.output_path, args.detector_type)

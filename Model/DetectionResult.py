@@ -6,21 +6,30 @@ class DetectionResult:
         self.names = 'Face'
         self.n_faces = 0
 
-    def __getitem__(self, index):
-        if isinstance(index, int):
+    def __getitem__(self, key):
+        if isinstance(key, int):
             return DetectionResult(
-                boxes=[self.boxes[index]],
-                scores=[self.scores[index]],
-                class_ids=[self.class_ids[index]]
+                boxes=[self.boxes[key]],
+                scores=[self.scores[key]],
+                class_ids=[self.class_ids[key]]
             )
-        elif isinstance(index, slice):
+        elif isinstance(key, slice):
             return DetectionResult(
-                boxes=self.boxes[index],
-                scores=self.scores[index],
-                class_ids=self.class_ids[index]
+                boxes=self.boxes[key],
+                scores=self.scores[key],
+                class_ids=self.class_ids[key]
             )
+        elif isinstance(key, str):
+            if key == "boxes" or key == "bbox":
+                return self.boxes
+            elif key == "scores":
+                return self.scores
+            elif key == "class_ids":
+                return self.class_ids
+            else:
+                raise KeyError(f"Invalid key: {key}")
         else:
-            raise TypeError("Index must be an integer or a slice")
+            raise TypeError("Index must be an integer, slice, or string")
 
     def __len__(self):
         return len(self.boxes)

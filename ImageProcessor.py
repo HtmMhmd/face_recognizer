@@ -1,132 +1,53 @@
-import cv2
 import numpy as np
+import cv2
 from typing import List, Tuple
 
 from Verify.Verify import FaceVerifier
 from Align.Align import FaceAligner
 from ImageUtilis.image_utilis import *
 
-# from Model.Detection.YoloDetector.YoloDetector import YOLOv8Detector
-from Model.detection_utilis import get_cropped_faces
-from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
-from Model.OpencvDetector import OpencvDetector
-from Model.YoloDetection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
-from Model.Landmark.Landmarker import FaceMeshDetector
-from Model.Landmark.Facedetector import MediapipeFaceDetector
-from Model.Landmark.utilis import draw_landmarks
-from Model.detection_utilis import draw_detections
-from Model.Embedding import *
-# from Model.FaceNet.Facenet import *
-# from Model.FaceNet.Facenet import FaceNetTFLiteClient
-
 from UsersDatabaseHandeler.UsersDatabaseHandeler import EmbeddingCSVHandler
+from Model.Detector import Detector
+from Model.DetectionEmbedding import DetectionEmbedding
+from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
+from Model.DetectionFaces import DetectionFaces
 
 class ImageProcessor:
-    def __init__(self, use_yolo: bool = False, verbose: bool = False):
+    def __init__(self, model_architecture='mediapipe', verbose=False, detection_embedding=None):
         """
-        Initializes the ImageProcessor with a face detection model and an embedding container.
+        Initializes the ImageProcessor with the specified configuration.
 
         Args:
-            use_yolo (bool): Indicates whether to use the YOLOv8 model for face detection.
-            verbose (bool): Enables verbose output for debugging.
-
+            model_architecture (str): The model architecture to use for detection ('yoloonnx', 'mediapipe', or 'ediapipe'). Defaults to 'yoloonnx'.
+            verbose (bool): Enables verbose output for debugging. Defaults to False.
+            detection_embedding (DetectionEmbedding): Optional DetectionEmbedding object to store detection results and embeddings.
         """
-        # Use YOLOv8 for detection if specified, otherwise use OpenCV
-        self.use_yolo = use_yolo
-        self.facenet_handler = FaceNetTFLiteHandler(verbose=verbose)
-        self.face_mesh_detector = FaceMeshDetector(verbose=verbose)
-
-        # Initialize the detection model based on the use_yolo flag
-        if self.use_yolo:
-            self.detection_model = MediapipeFaceDetector(verbose=verbose)
-        else:
-            self.detection_model = OpencvDetector()
-
-
-
-    def apply_detection_model(self, image: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
-        """
-        Applies the face detection model to the given image.
-
-        Args:
-            image: The input image.
-
-        Returns:
-            A list of tuples containing the bounding box coordinates and the cropped face image.
-        """
-        results = self.detection_model.detect_faces(image)
-        # Check if results is not empty
-        if len(results) == 0:
-            return []
-        image_cropped = get_cropped_faces(image, results)
-        zip_results = list(zip(results, image_cropped))
-        return zip_results
-
-    def apply_opencv_face(self, image: np.ndarray) -> List[Tuple[np.ndarray, np.ndarray]]:
-        """
-        Applies the OpenCV face detection model to the given image.
-
-        Args:
-            image: The input image.
-
-        Returns:
-            A list of tuples containing the bounding box coordinates and the cropped face image.
-        """
-        results = self.detection_model.detect_faces(image)
-        # Check if results is not empty
-        if len(results) == 0:
-            return []
-        image_cropped = get_cropped_faces(image, results)
-        zip_results = list(zip(results, image_cropped))
-        return zip_results
-
-    def process_image(self, image_org):
-        """
-        Processes an image to detect faces and extract embeddings.
-
-        Args:
-            image: The input image, either as a file path or a NumPy array.
-
-        Returns:
-            An EmbeddingContainer containing the face embeddings.
-        """
-        image = image_org.copy()
-        # Initialize the embedding container to store face embeddings
-        self.Embeddings = EmbeddingContainer()
-        # Load the image if a file path is provided
-        if isinstance(image, str) and os.path.isfile(image):
-            image = cv2.imread(image)
-
-        # Raise an error if the image could not be loaded
-        if image is None:
-            raise FileNotFoundError(f"Image not found at {image}")
+        self.verbose = verbose
+        self.detection_embedding = detection_embedding if detection_embedding is not None else DetectionEmbedding(DetectionFaces(), [])
         
-        # Apply the appropriate face detection model based on the use_yolo flag
-        if self.use_yolo:
-            images = self.apply_detection_model(image)
-        else:
-            images = self.apply_opencv_face(image)
+        self.detector = Detector(detector_type=model_architecture, detection_faces=self.detection_embedding.detection_faces, verbose=verbose)
+        self.facenet = FaceNetTFLiteHandler(verbose=verbose)
+        self.detection_embedding = DetectionEmbedding()
 
-        # Iterate over detected faces and extract embeddings
-        for bbox, face in images:
-            # Display the image
+    def process_image(self, image):
+        """
+        Processes the input image to detect faces and extract embeddings.
 
-            # cv2.imshow('Image', face)
-            # # Wait for the 'q' key to be pressed
-            # while True:
-            #     if cv2.waitKey(1) & 0xFF == ord('q'):
-            #         break
-            # # Close all OpenCV windows
-            # cv2.destroyAllWindows()
+        Args:
+            image (np.ndarray): The input image.
 
-            # Preprocess the cropped face image
-            face = preprocess_image(face)
-            # Get the embedding from the FaceNet model
-            embedding = self.facenet_handler.forward(face.astype(np.float32))
-            # Add the bounding box and embedding to the container
-            self.Embeddings.add(bbox.boxes[0], embedding)
+        Returns:
+            DetectionEmbedding: The detection results containing bounding boxes, scores, class IDs, cropped faces, and embeddings.
+        """
+        detection_faces = self.detector.detect(image)
+        
+        embeddings = []
+        for cropped_face in detection_faces.cropped_faces:
+            embedding = self.facenet.forward(preprocess_image(cropped_face))
+            embeddings.append(embedding)
+        self.detection_embedding.assign(detection_faces, embeddings)
 
-        return self.Embeddings
+        return self.detection_embedding
 
     def detect_landmarks(self, image):
         """
@@ -138,7 +59,7 @@ class ImageProcessor:
         Returns:
             The image with landmarks drawn on it.
         """
-        landmarks = self.face_mesh_detector.get_landmarks(image)
+        landmarks = self.detector.landmark(image)
         return landmarks
     
     def verify_faces(self, image) -> List[dict]:
@@ -170,10 +91,50 @@ class ImageProcessor:
             embedding = face['embedding']
             for i in range(len(database_handeler)):
                 db_embedding, user_name = database_handeler.read_embedding(i)
-                verification_result = face_verifier.verify_faces(embedding, db_embedding, verbose=False)
-                results.append({
-                    'bbox': face['bbox'],
-                    'user_name': user_name,
-                    'verification_result': verification_result
-                })
+                verification_result = face_verifier.verify_faces(embedding, db_embedding, verbose=self.verbose)
+                if verification_result['cosine']['verified'] and verification_result['euclidean']['verified'] and verification_result['euclidean_l2']['verified']:
+                    results.append({
+                        'bbox': face['bbox'],
+                        'user_name': user_name,
+                        'verification_result': verification_result
+                    })
         return results
+
+    def align_faces(self, image):
+        """
+        Aligns faces in an image.
+
+        Args:
+            image (np.ndarray): The input image.
+
+        Returns:
+            The aligned image.
+        """
+        face_aligner = FaceAligner()
+
+        return face_aligner.align_faces(image)
+    def draw_detections(self, image):
+        """
+        Draws bounding boxes on the detected faces in the image.
+
+        Args:
+            image (np.ndarray): The input image.
+            detection_faces (DetectionFaces): The detection results containing bounding boxes.
+
+        Returns:
+            np.ndarray: The image with bounding boxes drawn.
+        """
+        return self.detector.draw_detections(image)
+    
+    def draw_landmarks(self, image): 
+        """
+        Draws landmarks on the detected faces in the image.
+
+        Args:
+            image (np.ndarray): The input image.
+            landmarks: The landmarks detected by MediaPipe.
+
+        Returns:
+            np.ndarray: The image with landmarks drawn.
+        """
+        return self.detector.draw_landmarks(image)

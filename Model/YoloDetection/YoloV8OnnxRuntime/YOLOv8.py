@@ -4,8 +4,9 @@ import numpy as np
 import onnxruntime
 
 from Model.YoloDetection.YoloV8OnnxRuntime.utils import xywh2xyxy, nms
-from Model.detection_utilis import draw_detections
+from Model.detection_utilis import draw_detections, get_cropped_faces
 from Model.DetectionResult import DetectionResult
+from Model.DetectionFaces import DetectionFaces
 
 class YOLOv8:
 
@@ -13,7 +14,7 @@ class YOLOv8:
     YOLOv8 object detector class.
     """
 
-    def __init__(self, path, conf_thres=0.7, iou_thres=0.5, verbose=False):
+    def __init__(self, path, conf_thres=0.7, iou_thres=0.5, verbose=False, detection_faces=None):
         """
         Initialize object detector.
 
@@ -28,6 +29,7 @@ class YOLOv8:
 
         # Initialize model
         self.initialize_model(path)
+        self.detection_faces = detection_faces if detection_faces is not None else DetectionFaces()
 
     def __call__(self, image):
         """
@@ -39,7 +41,7 @@ class YOLOv8:
         Returns:
             List of bounding boxes, scores and class ids.
         """
-        return self.detect_objects(image)
+        return self.detect_faces(image)
 
     def initialize_model(self, path):
         """
@@ -53,8 +55,7 @@ class YOLOv8:
         self.get_input_details()
         self.get_output_details()
 
-
-    def detect_objects(self, image):
+    def detect_faces(self, image):
         """
         Detect objects in the given image.
 
@@ -62,22 +63,22 @@ class YOLOv8:
             image (numpy.ndarray): Input image.
 
         Returns:
-            List of bounding boxes, scores and class ids.
+            DetectionFaces: The detection results containing bounding boxes, scores, class IDs, and cropped faces.
         """
+        self.detection_faces.reset()  # Reset the detection faces object
         input_tensor = self.prepare_input(image)
 
         # Perform inference on the image
         outputs = self.inference(input_tensor)
 
         self.boxes, self.scores, self.class_ids = self.process_output(outputs)
-        
-        self.results = DetectionResult()
 
-        self.results.boxes = self.boxes
-        self.results.scores = self.scores
-        self.results.class_ids = self.class_ids
-        
-        return self.results
+        for i, box in enumerate(self.boxes):
+            bbox = [int(box[0]),int(box[1]),int(box[2]),int(box[3])]
+            cropped_faces = get_cropped_faces(image, [bbox])
+            self.detection_faces.add(bbox, self.scores[i], self.class_ids[i], cropped_faces[0])
+
+        return self.detection_faces
 
     def prepare_input(self, image):
         """
@@ -179,12 +180,7 @@ class YOLOv8:
         boxes = np.divide(boxes, input_shape, dtype=np.float32)
         boxes *= np.array([self.img_width, self.img_height, self.img_width, self.img_height])
         return boxes
-
-    def draw_detections(self, image, draw_scores=True, mask_alpha=0.4):
-
-        return draw_detections(image, self.boxes, self.scores,
-                               self.class_ids, mask_alpha)
-
+    
     def get_input_details(self):
         """
         Get input details of the model.
@@ -202,3 +198,16 @@ class YOLOv8:
         """
         model_outputs = self.session.get_outputs()
         self.output_names = [model_outputs[i].name for i in range(len(model_outputs))]
+
+    def draw_detections(self, image):
+        """
+        Draws bounding boxes on the detected faces in the image.
+
+        Args:
+            image (np.ndarray): The input image.
+            detection_faces (DetectionFaces): The detection results containing bounding boxes.
+
+        Returns:
+            np.ndarray: The image with bounding boxes drawn.
+        """
+        return draw_detections(image, self.detection_faces.boxes, self.detection_faces.scores, self.detection_faces.class_ids)

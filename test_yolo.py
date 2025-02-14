@@ -1,10 +1,10 @@
 import cv2
 # from ultralytics import YOLO
-from Model.Detection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
-from Model.Landmark.Facedetector import MediapipeFaceDetector
-from Model.Landmark.Landmarker import FaceMeshDetector
-from Model.Detection.detection_utilis import draw_detections
-from Model.Landmark.utilis import draw_landmarks
+from Model.YoloDetection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
+from Model.MediapipeDetection.MediapipeFaceDetector import MediapipeFaceDetector
+from Model.MediapipeDetection.MediapipeFaceLandmarker import FaceMeshDetector
+from Model.detection_utilis import draw_detections
+from Model.MediapipeDetection.mediapipe_utilis import draw_landmarks
 # from Model.Detection.YoloDetector.YoloDetector import Yolov8Detector
 
 # Initialize the face detector and face mesh detector
