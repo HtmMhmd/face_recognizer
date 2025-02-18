@@ -69,26 +69,26 @@ if __name__ == "__main__":
     user_name = "Stegn"  # Provide the user name
     add_user(image_path3, user_name, use_yolo=True)
 
-    image_processor = ImageProcessor(use_yolo=True, verbose=False)
-    print('Negative Test Case')
-    image_path = get_random_image_path("gallery_faces")  # Provide the path to your test image
-    results = image_processor.verify_faces(image_path)
-    print(f"Results for image: {image_path}")
-    for result in results:
-        print(f"Bounding Box: {result['bbox']}")
-        print(f"User Name: {result['user_name']}")
-        print(f"Verification Result: {result['verification_result']}")
-        print("-------------------------------------")
+    # image_processor = ImageProcessor(use_yolo=True, verbose=False)
+    # print('Negative Test Case')
+    # image_path = get_random_image_path("gallery_faces")  # Provide the path to your test image
+    # results = image_processor.verify_faces(image_path)
+    # print(f"Results for image: {image_path}")
+    # for result in results:
+    #     print(f"Bounding Box: {result['bbox']}")
+    #     print(f"User Name: {result['user_name']}")
+    #     print(f"Verification Result: {result['verification_result']}")
+    #     print("-------------------------------------")
 
-    image_processor2 = ImageProcessor(use_yolo=True, verbose=False)
-    print('Positive Test Case')
-    image_path2 = 'gallery_faces/gallery_13_2.jpg'
-    results = image_processor2.verify_faces(image_path2)
-    print(f"Results for image: {image_path2}")
-    for result in results:
-        print(f"Bounding Box: {result['bbox']}")
-        print(f"User Name: {result['user_name']}")
-        print(f"Verification Result: {result['verification_result']}")
-        print("-------------------------------------")
+    # image_processor2 = ImageProcessor(use_yolo=True, verbose=False)
+    # print('Positive Test Case')
+    # image_path2 = 'gallery_faces/gallery_13_2.jpg'
+    # results = image_processor2.verify_faces(image_path2)
+    # print(f"Results for image: {image_path2}")
+    # for result in results:
+    #     print(f"Bounding Box: {result['bbox']}")
+    #     print(f"User Name: {result['user_name']}")
+    #     print(f"Verification Result: {result['verification_result']}")
+    #     print("-------------------------------------")
 
 

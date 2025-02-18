@@ -62,39 +62,27 @@ class ImageProcessor:
         landmarks = self.detector.landmark(image)
         return landmarks
     
-    def verify_faces(self, image) -> List[dict]:
+    def verify_faces(self) -> List[dict]:
         """
         Verifies faces in an image against the user database.
 
         Args:
-            image (np.ndarray): The input image.
+            detection_embedding (DetectionEmbedding): The detection results containing embeddings.
 
         Returns:
             List[dict]: A list of dictionaries containing bounding boxes, user names, and verification results.
         """
         database_handeler = EmbeddingCSVHandler()
-
-        # Load the image if a file path is provided
-        if isinstance(image, str) and os.path.isfile(image):
-            image = cv2.imread(image)
-
-        # Raise an error if the image could not be loaded
-        if image is None:
-            raise FileNotFoundError(f"Image not found at {image}")
-
-        faces = self.process_image(image)
         face_verifier = FaceVerifier()
 
         results = []
-        for face in faces:
-
-            embedding = face['embedding']
+        for face, embedding in zip(self.detection_embedding.detection_faces, self.detection_embedding.embeddings):
             for i in range(len(database_handeler)):
                 db_embedding, user_name = database_handeler.read_embedding(i)
                 verification_result = face_verifier.verify_faces(embedding, db_embedding, verbose=self.verbose)
-                if verification_result['cosine']['verified'] and verification_result['euclidean']['verified'] and verification_result['euclidean_l2']['verified']:
+                if verification_result['results']['cosine']['verified'] and verification_result['results']['euclidean']['verified'] and verification_result['results']['euclidean_l2']['verified']:
                     results.append({
-                        'bbox': face['bbox'],
+                        'bbox': face.bbox,
                         'user_name': user_name,
                         'verification_result': verification_result
                     })

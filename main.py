@@ -41,6 +41,7 @@ def process_camera_feed(image_processor):
                 landmarks = image_processor.detect_landmarks(ff)
                 image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
 
+                print(image_processor.verify_faces())
             cv2.imshow("Detection with Landmarks", image_with_landmarks)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
