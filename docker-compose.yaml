@@ -1,9 +1,9 @@
 version: '3.8'
 services:
   face_recognizer:
-    # container_name: face_recognizer_container
-    # build: .
-    image: face_recognizer_container
+    image: face_recognizer
+    container_name: face_recognizer
+    build: .
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1

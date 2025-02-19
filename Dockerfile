@@ -1,21 +1,41 @@
-FROM ros:humble-ros-base
+FROM python:3.10
 
-# Install MTCNN dependencies (adjust as needed)
-RUN apt-get update && apt-get install -y python3-pip
-RUN apt-get update && apt-get install -y --fix-missing libgl1-mesa-glx libglib2.0-0 libsm6 libxext6 libxrender-dev
+# Prevent interactive prompts during package installation
+# ENV DEBIAN_FRONTEND=noninteractive
 
-# Copy your ROS2 node code
-COPY . /workspace/src/my_mtcnn_node
+# Set working directory
+WORKDIR /app
 
-# Build your ROS2 node
-WORKDIR /workspace/src/my_mtcnn_node
-RUN colcon build --symlink-install
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libgl1-mesa-dev \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libcairo2-dev \
+    pkg-config \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements file first (this layer will be cached)
+# Upgrade pip and install Python packages
+RUN python3.10 -m pip install --no-cache-dir --upgrade pip
+
+# # Install the required Python packages
+# RUN pip install --no-cache-dir \
+#     opencv-python-headless \
+#     tflite-runtime \
+#     mediapipe \
+#     numpy
+
+# Copy requirements first to leverage Docker cache
 COPY requirements.txt .
-
-# Install Python dependencies (this layer will be cached)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Run your node
-#CMD ["ros2", "run", "my_mtcnn_node", "mtcnn_detector"]
+# Copy your application files
+COPY . .
+
+
+# # Set the default command
+# CMD ["python3.10", "main.py"]
