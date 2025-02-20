@@ -5,26 +5,22 @@ import os
 import random
 
 import numpy as np
-def add_user(image_path: str, user_name: str, use_yolo: bool = True):
+from database.db_handler import FaceDatabase
 
-    image_processor = ImageProcessor(use_yolo=True, verbose=True)
+def add_user(image_path: str, user_name: str):
+    image_processor = ImageProcessor(verbose=True)
+    database_handler = FaceDatabase()
 
-    # Initialize user database handler
-    database_handler = EmbeddingCSVHandler()
-
-    # Read image
     image = cv2.imread(image_path)
     if image is None:
         raise FileNotFoundError(f"Image not found at {image_path}")
 
-    # Detect faces
     embeddings = image_processor.process_image(image)
-    if len(embeddings['embedding']) == 0:
+    if len(embeddings) == 0:
         print("No faces detected")
-        return
-
-    # Extract embeddings and save to database
-    database_handler.write_embedding(embeddings['embedding'][0].tolist(), user_name)
+        return    
+    
+    database_handler.add_user(user_name,np.array(embeddings['embeddings'][0], dtype='float32'))
     print(f"User {user_name} added to the database")
 
 def verify_faces_in_image(self, image_path: str):
@@ -37,7 +33,7 @@ def verify_faces_in_image(self, image_path: str):
     Returns:
         List[dict]: A list of dictionaries containing bounding boxes, user names, and verification results.
     """
-    image_processor = ImageProcessor(use_yolo=True, verbose=True)
+    image_processor = ImageProcessor(verbose=True)
 
     if image_path is None:
         raise FileNotFoundError(f"Image not found at {image_path}")
@@ -65,9 +61,9 @@ def get_random_image_path(folder_path: str) -> str:
 # Example usage
 if __name__ == "__main__":
 
-    image_path3 = "gallery_faces/gallery_13_1.jpg"  # Provide the path to your test image
-    user_name = "Stegn"  # Provide the user name
-    add_user(image_path3, user_name, use_yolo=True)
+    image_path3 = "hatem.png"  # Provide the path to your test image
+    user_name = "hatem"  # Provide the user name
+    add_user(image_path3, user_name)
 
     # image_processor = ImageProcessor(use_yolo=True, verbose=False)
     # print('Negative Test Case')

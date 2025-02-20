@@ -1,0 +1,30 @@
+FROM python:3.10.16-slim
+
+WORKDIR /app
+
+# Install only necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    sqlite3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy only database requirements first
+RUN pip install --upgrade pip
+COPY database/requirements.sql.txt .
+RUN pip install --no-cache-dir -r requirements.sql.txt
+
+# Copy database-related files only
+COPY database /app/database
+COPY db_service.py .
+
+# Create data directory with proper permissions
+RUN mkdir -p /data && \
+    chmod 777 /data && \
+    chown 1000:1000 /data
+
+# Create non-root user
+RUN useradd -u 1000 -m dbuser && \
+    chown -R dbuser:dbuser /app/database
+
+USER dbuser
+
+CMD ["python", "database/db_api.py"]

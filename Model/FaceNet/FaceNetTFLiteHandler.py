@@ -25,5 +25,4 @@ class FaceNetTFLiteHandler:
         
         if self.verbose:
             print(f"Embedding Model Inference Time: {inference_time*1000:.2f} ms")
-        
         return output_data[0]

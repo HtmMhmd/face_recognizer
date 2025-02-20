@@ -11,6 +11,7 @@ from Model.Detector import Detector
 from Model.DetectionEmbedding import DetectionEmbedding
 from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
 from Model.DetectionFaces import DetectionFaces
+from database.db_handler import FaceDatabase
 
 class ImageProcessor:
     def __init__(self, model_architecture='mediapipe', verbose=False, detection_embedding=None):
@@ -66,23 +67,24 @@ class ImageProcessor:
         """
         Verifies faces in an image against the user database.
 
-        Args:
-            detection_embedding (DetectionEmbedding): The detection results containing embeddings.
-
         Returns:
             List[dict]: A list of dictionaries containing bounding boxes, user names, and verification results.
         """
-        database_handeler = EmbeddingCSVHandler()
+        database_handler = FaceDatabase()
         face_verifier = FaceVerifier()
 
         results = []
-        for face, embedding in zip(self.detection_embedding.detection_faces, self.detection_embedding.embeddings):
-            for i in range(len(database_handeler)):
-                db_embedding, user_name = database_handeler.read_embedding(i)
+        for face, embedding in zip(self.detection_embedding.detection_faces.boxes, self.detection_embedding.embeddings):
+            # Get all embeddings from database
+            all_embeddings = database_handler.get_all_embeddings()
+            for user_name, db_embedding in all_embeddings.items():
+                print(f"Verifying face with user {user_name}")
                 verification_result = face_verifier.verify_faces(embedding, db_embedding, verbose=self.verbose)
-                if verification_result['results']['cosine']['verified'] and verification_result['results']['euclidean']['verified'] and verification_result['results']['euclidean_l2']['verified']:
+                if verification_result['cosine']['verified'] and \
+                   verification_result['euclidean']['verified'] and \
+                   verification_result['euclidean_l2']['verified']:
                     results.append({
-                        'bbox': face.bbox,
+                        'bbox': face,
                         'user_name': user_name,
                         'verification_result': verification_result
                     })

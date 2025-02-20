@@ -1,20 +1,46 @@
 version: '3.8'
 services:
   face_recognizer:
+    # build: 
+    #   context: .
+    #   dockerfile: Dockerfile
     image: face_recognizer
-    # container_name: face_recognizer
-    # build: .
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
+      - DB_API_URL=http://db_service:5000
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ./:/app:ro
+      - face_db_data:/data:rw
     devices:
       - /dev/video0:/dev/video0
-    network_mode: host
     ipc: host
     stdin_open: true
     tty: true
-    # command: 
-    #   - "/bin/bash"
+    depends_on:
+      - db_service
+    networks:
+      - face_net
+    ports:
+      - "8000:8000"  # If needed for your application
+
+  db_service:
+    build: 
+      context: .
+      dockerfile: Dockerfile.db
+    volumes:
+      - face_db_data:/data:rw
+    command: ["python", "database/db_api.py"]
+    ports:
+      - "5000:5000"
+    networks:
+      - face_net
+
+networks:
+  face_net:
+    driver: bridge
+
+volumes:
+  face_db_data:
+    driver: local
