@@ -2,14 +2,14 @@ version: '3.8'
 services:
   face_recognizer:
     image: face_recognizer
-    container_name: face_recognizer
-    build: .
+    # container_name: face_recognizer
+    # build: .
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ./:/workspace/src/my_mtcnn_node:ro
+      - ./:/app:ro
     devices:
       - /dev/video0:/dev/video0
     network_mode: host
