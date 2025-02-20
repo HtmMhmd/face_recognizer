@@ -4,14 +4,15 @@ from typing import List, Tuple
 
 from Verify.Verify import FaceVerifier
 from Align.Align import FaceAligner
-from ImageUtilis.image_utilis import *
+from ImageUtilis.image_utilis import preprocess_image
 
-from UsersDatabaseHandeler.UsersDatabaseHandeler import EmbeddingCSVHandler
+# from UsersDatabaseHandeler.UsersDatabaseHandeler import EmbeddingCSVHandler
 from Model.Detector import Detector
 from Model.DetectionEmbedding import DetectionEmbedding
 from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
 from Model.DetectionFaces import DetectionFaces
 from database.db_handler import FaceDatabase
+from Model.detection_utilis import draw_user_names_on_bboxes
 
 class ImageProcessor:
     def __init__(self, model_architecture='mediapipe', verbose=False, detection_embedding=None):
@@ -60,8 +61,8 @@ class ImageProcessor:
         Returns:
             The image with landmarks drawn on it.
         """
-        landmarks = self.detector.landmark(image)
-        return landmarks
+        self.landmarks = self.detector.landmark(image)
+        return self.landmarks
     
     def verify_faces(self) -> List[dict]:
         """
@@ -74,7 +75,7 @@ class ImageProcessor:
         face_verifier = FaceVerifier()
 
         results = []
-        for face, embedding in zip(self.detection_embedding.detection_faces.boxes, self.detection_embedding.embeddings):
+        for bbox, embedding in zip(self.detection_embedding.detection_faces.boxes, self.detection_embedding.embeddings):
             # Get all embeddings from database
             all_embeddings = database_handler.get_all_embeddings()
             for user_name, db_embedding in all_embeddings.items():
@@ -84,7 +85,7 @@ class ImageProcessor:
                    verification_result['euclidean']['verified'] and \
                    verification_result['euclidean_l2']['verified']:
                     results.append({
-                        'bbox': face,
+                        'bbox': bbox,
                         'user_name': user_name,
                         'verification_result': verification_result
                     })
@@ -128,3 +129,16 @@ class ImageProcessor:
             np.ndarray: The image with landmarks drawn.
         """
         return self.detector.draw_landmarks(image)
+    
+    def draw_user_names(self, image, results):
+        """
+        Draws user names on the bounding boxes of detected faces.
+
+        Args:
+            image (np.ndarray): The input image.
+            results (List[dict]): The results of face verification.
+
+        Returns:
+            np.ndarray: The image with user names drawn on the bounding boxes.
+        """
+        return draw_user_names_on_bboxes(image, results)

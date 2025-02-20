@@ -30,22 +30,6 @@ class FaceVerifier:
         threshold = thresholds.get(model_name, base_threshold).get(distance_metric, 0.4)
         return threshold
 
-    def print_results2(self, results):
-        metrices = ''
-        verified = ''
-        distance = ''
-        threash  = ''
-        for metric, result in results.items():
-            metrices = metrices + f"{metric}| "
-            verified = verified + f"{result['verified']}| "
-            distance = distance + f"{result['distance']:.2f}| "
-            threash  = threash  + f"{result['threshold']}| "
-        print('__________________________')
-        print(f" | Metric   : {metrices}")
-        print(f" | Verified : {verified}")
-        print(f" | Distance : {distance}")
-        print(f" | Threshold: {threash}")
-        print('__________________________')
     def print_results(self, results):
         """Prints verification results in a square-like format with consistent alignment
         and limits distance/threshold to two decimal places.

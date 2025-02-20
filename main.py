@@ -30,8 +30,8 @@ def process_camera_feed(image_processor):
                     bbox = embeddings['boxes'][item_index]
                     ff = frame.copy()
 
-                    print("Bounding Box:", bbox)
-                    print("Embedding:", embeddings['embeddings'][item_index][0:3])
+                    # print("Bounding Box:", bbox)
+                    # print("Embedding:", embeddings['embeddings'][item_index][0:3])
 
                 # Run face detection on the frame
                 image_with_detections = image_processor.draw_detections(ff)
@@ -40,7 +40,9 @@ def process_camera_feed(image_processor):
                 landmarks = image_processor.detect_landmarks(ff)
                 image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
 
-                image_processor.verify_faces()
+                verify_results = image_processor.verify_faces()
+                
+                image_username = image_processor.draw_user_names(image_with_landmarks, verify_results)
             cv2.imshow("Detection with Landmarks", image_with_landmarks)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -68,9 +70,9 @@ def process_camera_handler(image_processor):
                     bbox = embeddings['boxes'][item_index]
                     ff = frame.copy()
 
-                    print("Bounding Box:", bbox)
-                    print("Embedding:", embeddings['embeddings'][item_index][0:3])
-                    print("-------------------------------------")
+                    # print("Bounding Box:", bbox)
+                    # print("Embedding:", embeddings['embeddings'][item_index][0:3])
+                    # print("-------------------------------------")
 
                 # Run face detection on the frame
                 image_with_detections = image_processor.draw_detections(ff)

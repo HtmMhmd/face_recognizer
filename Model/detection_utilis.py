@@ -109,6 +109,49 @@ def draw_comparison(img1, img2, name1, name2, fontsize=2.6, text_thickness=3):
 
     return combined_img
 
-# def resize_frame(frame, width=640, height=480):
-#     return cv2.resize(frame, (int(width), int(height)))
+def draw_user_names_on_bboxes(image, results):
+    """Draws bounding boxes and user names on an image.
 
+    Args:
+        image (numpy.ndarray): The input image as a NumPy array.
+        results (list): A list of dictionaries, where each dictionary contains:
+            - 'bbox' (tuple): A tuple of (x1, y1, x2, y2) representing the bounding box.
+            - 'user_name' (str): The user name to display.
+            - 'verification_result' (bool): Boolean indicating the verification result (optional, used for color).
+
+    Returns:
+        numpy.ndarray: The modified image with bounding boxes and user names.
+    """
+
+    for result in results:
+        bbox = result['bbox']
+        user_name = result['user_name']
+        verification_result = result.get('verification_result', True)  # Default to True if not present
+
+        x1, y1, x2, y2 = map(int, bbox)  # Convert bbox coordinates to integers
+
+        # Determine bounding box color based on verification result
+        color = (0, 255, 0) if verification_result else (0, 0, 255)  # Green for True, Red for False
+
+        # Draw the bounding box
+        cv2.rectangle(image, (x1, y1), (x2, y2), color, 2)
+
+        # Set font properties
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.7
+        font_color = color  # Use the same color as the bounding box
+        font_thickness = 2
+
+        # Calculate text size to avoid exceeding image boundaries and for better positioning
+        text_size = cv2.getTextSize(user_name, font, font_scale, font_thickness)[0]
+        text_x = x1
+        text_y = y1 - 10  # Position text slightly above the bounding box
+
+        # Adjust text position if it goes out of bounds
+        if text_y < 0:
+            text_y = y1 + text_size[1] + 10 # Place below box if above
+
+        # Draw the user name on the image
+        cv2.putText(image, user_name, (text_x, text_y), font, font_scale, font_color, font_thickness, cv2.LINE_AA)
+
+    return image
