@@ -13,6 +13,7 @@ RUN apt-get update && apt-get install -y \
     libsm6 \
     libxext6 \
     libxrender1 \
+    libpulse0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip and install Python packages
