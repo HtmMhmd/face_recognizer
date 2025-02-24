@@ -25,6 +25,7 @@ class FaceMeshDetector:
         )
         self.verbose = verbose
         self.landmarks = None
+        self.image_shape = []
 
     def landmark(self, image):
         """
@@ -37,6 +38,7 @@ class FaceMeshDetector:
             A mediapipe.framework.formats.landmark_pb2.NormalizedLandmarkList object containing
             the detected facial landmarks.
         """
+        self.image_shape = image.shape
         start_time = time.time()
         self.landmarks = self.face_mesh.process(image)
         inference_time = time.time() - start_time
@@ -46,7 +48,7 @@ class FaceMeshDetector:
 
         return self.landmarks
 
-    def get_eye_mouth_keypoints(self, face_landmarks, image_shape) -> Dict[str, List[Tuple[int, int]]]:
+    def get_eye_mouth_keypoints(self) -> Dict[str, List[Tuple[int, int]]]:
         """
         Extracts the keypoints of the left eye, right eye, and mouth from the facial landmarks.
 
@@ -67,13 +69,13 @@ class FaceMeshDetector:
             "right_eye": [],
             "mouth": []
         }
-        h, w, _ = image_shape
+        h, w, _ = self.image_shape
 
-        LEFT_EYE_INDICES = [33, 133, 160, 144, 158, 153]
-        RIGHT_EYE_INDICES = [362, 263, 387, 373, 380, 374]
+        LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]  
+        RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380] 
         MOUTH_INDICES = [61, 291, 39, 181, 17, 405]
 
-        for idx, landmark in enumerate(face_landmarks.landmark):
+        for idx, landmark in enumerate(self.landmarks):
             cx, cy = int(landmark.x * w), int(landmark.y * h)
             if idx in LEFT_EYE_INDICES:
                 eye_mouth_keypoints["left_eye"].append((cx, cy))
@@ -81,7 +83,6 @@ class FaceMeshDetector:
                 eye_mouth_keypoints["right_eye"].append((cx, cy))
             elif idx in MOUTH_INDICES:
                 eye_mouth_keypoints["mouth"].append((cx, cy))
-
         return eye_mouth_keypoints
 
     def draw_landmarks(self, image):

@@ -69,6 +69,10 @@ class Detector:
             The landmarks detected by MediaPipe.
         """
         return self.landmarker.landmark(image)
+    
+    def get_eye_mouth_keypoints(self):
+
+        return self.landmarker.get_eye_mouth_keypoints()
 
     def draw_landmarks(self, image):
         """

@@ -20,7 +20,7 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
                 break
 
             # Resize the frame
-            frame = cv2.resize(frame, (480, 360))
+            # frame = cv2.resize(frame, (480, 360))
 
             embeddings = image_processor.process_image(frame)
             if len(embeddings) == 0:
@@ -36,15 +36,21 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
 
                 # Run landmark detection on the frame
                 landmarks = image_processor.detect_landmarks(ff)
+                # print(landmarks)
+
+                # image_with_detections = cv2.flip(image_with_detections, 1)
+
                 image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
 
                 verify_results = image_processor.verify_faces()
                 
                 image_username = image_processor.draw_user_names(image_with_landmarks, verify_results)
-
+                eye_mouth = image_processor.get_eye_mouth_keypoints()
+                # image_with_landmarks = drowsiness_detector.process_frame(frame, landmarks)
+                print(eye_mouth)
             # Process drowsiness detection if enabled
-            if drowsiness_detector:
-                image_with_landmarks = drowsiness_detector.process_frame(image_with_landmarks)
+                if drowsiness_detector:
+                    image_with_landmarks = drowsiness_detector.process_frame(image_username, eye_mouth)
 
             cv2.imshow("Detection with Landmarks", image_with_landmarks)
 

@@ -14,8 +14,8 @@ Fn:
 
 
 class FaceMeshDetector:
-    def __init__(self,camera=None, max_faces=1, min_detection_conf=0.5, min_tracking_conf=0.5):
-        self.cap = camera if camera is not None else cv2.VideoCapture(0)
+    def __init__(self, max_faces=1, min_detection_conf=0.5, min_tracking_conf=0.5):
+        # self.cap = camera if camera is not None else cv2.VideoCapture(0)
         self.mp_drawing = mp.solutions.drawing_utils    #helps in drawing landmarks on the frame 
         self.mp_drawing_styles = mp.solutions.drawing_styles
         self.mp_face_mesh = mp.solutions.face_mesh      #loads the facemesh model for detecting the facial landmarks
@@ -76,7 +76,10 @@ class FaceMeshDetector:
         h, w, _ = image_shape
 
         LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]  
-        RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380]  
+        RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380] 
+        # LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144, 145, 163]  
+        # RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380, 374, 390] 
+
         MOUTH_INDICES = [61, 291, 39, 181, 17, 405]
 
         #stores keypoints
@@ -131,23 +134,23 @@ class FaceMeshDetector:
         return image_with_bbox, bbox_data, eye_mouth_keypoints  #calling the get_eye_mouth_keypoints function
 
 
-    def run(self):
-        while self.cap.isOpened():
-            success, image = self.cap.read()
-            if not success:
-                break
+    def run(self, image):
+        # while self.cap.isOpened():
+        #     success, image = self.cap.read()
+        #     if not success:
+        #         break
 
             image_with_bbox, bbox_data, eye_mouth_keypoints = self.process_frame(image)
-            cv2.imshow("Face Mesh Detection", cv2.flip(image_with_bbox, 1))
+        #     cv2.imshow("Face Mesh Detection", cv2.flip(image_with_bbox, 1))
 
-            print("Bounding Box Data:", bbox_data)
-            print("Eye and Mouth Keypoints:", eye_mouth_keypoints)
+        #     print("Bounding Box Data:", bbox_data)
+        #     print("Eye and Mouth Keypoints:", eye_mouth_keypoints)
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        #     if cv2.waitKey(1) & 0xFF == ord('q'):
+        #         break
 
-        self.cap.release()
-        cv2.destroyAllWindows()
+        # self.cap.release()
+        # cv2.destroyAllWindows()
 
 if __name__ == "__main__":
     detector = FaceMeshDetector()

@@ -64,6 +64,10 @@ class ImageProcessor:
         self.landmarks = self.detector.landmark(image)
         return self.landmarks
     
+    def get_eye_mouth_keypoints(self):
+
+        return self.detector.get_eye_mouth_keypoints()
+
     def verify_faces(self) -> List[dict]:
         """
         Verifies faces in an image against the user database.
