@@ -47,10 +47,11 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
                 image_username = image_processor.draw_user_names(image_with_landmarks, verify_results)
                 eye_mouth = image_processor.get_eye_mouth_keypoints()
                 # image_with_landmarks = drowsiness_detector.process_frame(frame, landmarks)
-                print(eye_mouth)
+                # print(eye_mouth)
             # Process drowsiness detection if enabled
                 if drowsiness_detector:
                     image_with_landmarks = drowsiness_detector.process_frame(image_username, eye_mouth)
+                    
 
             cv2.imshow("Detection with Landmarks", image_with_landmarks)
 
@@ -85,6 +86,11 @@ def process_camera_handler(image_processor, drowsiness_detector=None):
                 # Run landmark detection on the frame
                 landmarks = image_processor.detect_landmarks(ff)
                 image_withlandmarks = image_processor.draw_landmarks(image_with_detections)
+
+                if image_with_detections is None:
+                    print("Face detection failed: No faces detected!")
+                else:
+                    print("Face detection successful!")
 
                 # Process drowsiness detection if enabled
                 if drowsiness_detector:

@@ -30,70 +30,60 @@ class FaceMeshDetector:
     def landmark(self, image):
         """
         Processes the input image to detect facial landmarks.
-
-        Args:
-            image (np.ndarray): The input image in which facial landmarks are to be detected.
-
-        Returns:
-            A mediapipe.framework.formats.landmark_pb2.NormalizedLandmarkList object containing
-            the detected facial landmarks.
         """
         self.image_shape = image.shape
-        start_time = time.time()
-        self.landmarks = self.face_mesh.process(image)
-        inference_time = time.time() - start_time
+        results = self.face_mesh.process(image)
 
-        if self.verbose:
-            print(f"FaceMeshDetector Inference Time: {inference_time * 1000:.2f} ms")
+        if results.multi_face_landmarks:
+            self.landmarks = results.multi_face_landmarks[0]  # Store detected face
+        else:
+            print("⚠️ Warning: No landmarks detected, keeping previous landmarks.")
+            # Do not set self.landmarks to None, retain last known landmarks
 
         return self.landmarks
+
+
 
     def get_eye_mouth_keypoints(self) -> Dict[str, List[Tuple[int, int]]]:
         """
         Extracts the keypoints of the left eye, right eye, and mouth from the facial landmarks.
-
-        Args:
-            face_landmarks (mp.solutions.face_mesh.FaceMesh.LandmarkList):
-                The facial landmarks detected by the FaceMesh model.
-            image_shape (Tuple[int, int, int]):
-                The shape of the image in which the facial landmarks were detected.
-
-        Returns:
-            A dictionary with the following keys: "left_eye", "right_eye", and "mouth".
-            The values are lists of tuples, each tuple containing the x and y coordinates of
-            the corresponding keypoints.
         """
-        
         eye_mouth_keypoints = {
             "left_eye": [],
             "right_eye": [],
             "mouth": []
         }
+
+        if self.landmarks is None:  # If no face detected, return empty keypoints
+            print("No face landmarks detected!")
+            return eye_mouth_keypoints
+
         h, w, _ = self.image_shape
 
-        LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]  
-        RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380] 
+        LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]
+        RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380]
         MOUTH_INDICES = [61, 291, 39, 181, 17, 405]
 
-        for idx, landmark in enumerate(self.landmarks):
+        for idx in range(len(self.landmarks.landmark)):  # Iterate over valid landmarks
+            landmark = self.landmarks.landmark[idx]
             cx, cy = int(landmark.x * w), int(landmark.y * h)
+            
             if idx in LEFT_EYE_INDICES:
                 eye_mouth_keypoints["left_eye"].append((cx, cy))
             elif idx in RIGHT_EYE_INDICES:
                 eye_mouth_keypoints["right_eye"].append((cx, cy))
             elif idx in MOUTH_INDICES:
                 eye_mouth_keypoints["mouth"].append((cx, cy))
+
         return eye_mouth_keypoints
+
 
     def draw_landmarks(self, image):
         """
-        Draws landmarks on the detected faces in the image.
-
-        Args:
-            image (np.ndarray): The input image.
-            landmarks: The landmarks detected by MediaPipe.
-
-        Returns:
-            np.ndarray: The image with landmarks drawn.
+        Draws the full face mesh and highlights eye landmarks.
         """
-        return draw_landmarks(image, self.landmarks)
+        if self.landmarks is None:
+            print("No landmarks detected.")
+            return image  
+
+        return draw_landmarks(image, self.landmarks)  # Pass the full face landmarks
