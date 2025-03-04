@@ -9,7 +9,7 @@ class DrowsinessDetector:
     def __init__(self):
         self.count = 0
         self.alarm_threshold = 30  # frames before alarm triggers
-        self.alarm_path = "/app/alarm2.mp3"
+        self.alarm_path = "drowsiness/alarm2.mp3"
 
         # Check if alarm file exists
         if os.path.exists(self.alarm_path):
@@ -27,7 +27,7 @@ class DrowsinessDetector:
     def play_alarm(self):
         """Plays alarm sound inside Docker using PulseAudio"""
         try:
-            subprocess.Popen(["paplay", self.alarm_path])
+            # subprocess.Popen(["paplay", self.alarm_path])
             print(" Alarm triggered! Playing sound...")
         except Exception as e:
             print(f" Error playing alarm: {e}")
@@ -48,7 +48,7 @@ class DrowsinessDetector:
         right_ear = self.calc_ear(right_eye)
         avg_ear = (left_ear + right_ear) / 2.0
 
-        print(f"📉 EAR: {avg_ear}")
+        # print(f"📉 EAR: {avg_ear}")
 
         # Draw eye landmarks on the image
         for (x, y) in left_eye + right_eye:
@@ -63,17 +63,6 @@ class DrowsinessDetector:
             print("Drowsiness Detected! Playing Alarm!")
             cv2.putText(image, "DROWSINESS ALERT!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
             self.play_alarm()  # Trigger alarm sound
-
-        # if self.count >= self.alarm_threshold:
-        #     if not self.alarm_playing:
-        #         print("Drowsiness Detected! Playing Alarm!")
-        #         threading.Thread(target=self.play_alarm, daemon=True).start()
-        #         self.alarm_playing = True
-        # else:
-        #     if self.alarm_playing:  # Stop the alarm when eyes open
-        #         self.alarm_playing = False
-
-       
 
         return image
 
