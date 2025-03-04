@@ -62,8 +62,8 @@ class FaceMeshDetector:
         }
         h, w = image_shape
 
-        LEFT_EYE_INDICES = [33, 133, 160, 144, 158, 153]
-        RIGHT_EYE_INDICES = [362, 263, 387, 373, 380, 374]
+        LEFT_EYE_INDICES = [33, 160, 158, 133, 153, 144]  
+        RIGHT_EYE_INDICES = [362, 385, 387, 263, 373, 380]  
         MOUTH_INDICES = [61, 291, 39, 181, 17, 405]
 
         for idx, landmark in enumerate(face_landmarks.landmark):

@@ -4,3 +4,4 @@ onnxruntime==1.20.1
 mediapipe==0.10.18
 requests==2.26.0
 opencv-python
+flask

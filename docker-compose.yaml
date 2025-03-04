@@ -24,6 +24,7 @@ services:
       - face_net
     ports:
       - "8000:8000"  # If needed for your application
+      - "9000:9000"
 
   db_service:
     build: 
