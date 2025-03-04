@@ -7,8 +7,11 @@ RUN apt-get update && apt-get install -y \
     sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
+
+# Upgrade pip and install Python packages
+RUN python3.10 -m pip install --no-cache-dir --upgrade pip
+
 # Copy only database requirements first
-RUN pip install --upgrade pip
 COPY database/requirements.sql.txt .
 RUN pip install --no-cache-dir -r requirements.sql.txt
 
@@ -26,5 +29,3 @@ RUN useradd -u 1000 -m dbuser && \
     chown -R dbuser:dbuser /app/database
 
 USER dbuser
-
-CMD ["python", "database/db_api.py"]

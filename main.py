@@ -32,7 +32,7 @@ def index():
 
 def play_alarm():
     import os
-    os.system("paplay /path/to/alarm/sound/file.wav")
+    os.system("paplay drowsiness/alarm2.mp3")
 
 # Function to process camera feed using cv2.VideoCapture
 def process_camera_feed(image_processor, drowsiness_detector=None, use_flask=False):
@@ -73,9 +73,9 @@ def process_camera_feed(image_processor, drowsiness_detector=None, use_flask=Fal
                 verify_results = image_processor.verify_faces()
                 
                 image_username = image_processor.draw_user_names(image_with_landmarks, verify_results)
+
                 eye_mouth = image_processor.get_eye_mouth_keypoints()
-                # image_with_landmarks = drowsiness_detector.process_frame(frame, landmarks)
-                # print(eye_mouth)
+
             # Process drowsiness detection if enabled
                 if drowsiness_detector:
                     image_with_landmarks = drowsiness_detector.process_frame(image_username, eye_mouth)

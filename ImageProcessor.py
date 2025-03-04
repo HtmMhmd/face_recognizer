@@ -82,12 +82,15 @@ class ImageProcessor:
         for bbox, embedding in zip(self.detection_embedding.detection_faces.boxes, self.detection_embedding.embeddings):
             # Get all embeddings from database
             all_embeddings = database_handler.get_all_embeddings()
-            for user_name, db_embedding in all_embeddings.items():
-                print(f"Verifying face with user {user_name}")
+            for user_name, db_data in all_embeddings.items():
+                db_embedding = db_data['embedding']
+                # print(f"Verifying face with user {user_name}")
                 verification_result = face_verifier.verify_faces(embedding, db_embedding, verbose=self.verbose)
                 if verification_result['cosine']['verified'] and \
                    verification_result['euclidean']['verified'] and \
                    verification_result['euclidean_l2']['verified']:
+                    # Update last_login field
+                    database_handler.update_last_login(user_name)
                     results.append({
                         'bbox': bbox,
                         'user_name': user_name,
