@@ -1,17 +1,9 @@
-import numpy as np
-import cv2
 from typing import List, Tuple
-
-from Verify.Verify import FaceVerifier
-from Align.Align import FaceAligner
-from ImageUtilis.image_utilis import preprocess_image
-
-# from UsersDatabaseHandeler.UsersDatabaseHandeler import EmbeddingCSVHandler
-from Model.Detector import Detector
-from Model.DetectionEmbedding import DetectionEmbedding
-from Model.FaceNet.FaceNetTFLiteHandler import FaceNetTFLiteHandler
-from Model.DetectionFaces import DetectionFaces
-from database.db_handler import FaceDatabase
+from Align import FaceAligner
+from Verify import FaceVerifier
+from ImageUtilis import preprocess_image
+from Model import Detector, DetectionEmbedding, FaceNetTFLiteHandler, DetectionFaces
+from database import FaceDatabase
 from Model.detection_utilis import draw_user_names_on_bboxes
 
 class ImageProcessor:

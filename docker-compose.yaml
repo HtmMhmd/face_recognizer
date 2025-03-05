@@ -26,7 +26,7 @@ services:
       - "8000:8000"  # If needed for your application
       - "9000:9000"
 
-    command: ["python", "main.py", "-roc", "-uf", "-ed"]
+    command: ["python", "api.py"]
 
   db_service:
     image: htmmhmd/face_recognizer-db_service:latest

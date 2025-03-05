@@ -1,11 +1,9 @@
 import cv2
-from UsersDatabaseHandeler.UsersDatabaseHandeler import EmbeddingCSVHandler
 from ImageProcessor import ImageProcessor
 import os
 import random
-
 import numpy as np
-from database.db_handler import FaceDatabase
+from database import FaceDatabase
 
 def add_user(image_path: str, user_name: str):
     image_processor = ImageProcessor(verbose=True)

@@ -1,9 +1,6 @@
-from Model.YoloDetection.YoloV8OnnxRuntime.Yolov8OnnxRuntimeDetector import Yolov8OnnxRuntimeDetector
-# from Model.YoloDetection.YoloDetector.YoloDetector import Yolov8Detector
-from Model.MediapipeDetection.MediapipeFaceDetector import MediapipeFaceDetector
-from Model.MediapipeDetection.MediapipeFaceLandmarker import FaceMeshDetector
 from Model.DetectionFaces import DetectionFaces
-
+from Model.MediapipeDetection import MediapipeFaceDetector, FaceMeshDetector
+from Model.YoloDetection import Yolov8OnnxRuntimeDetector
 class Detector:
     def __init__(self, detector_type, min_detection_conf=0.5, verbose=False, detection_faces=None):
         """
