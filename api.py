@@ -1,6 +1,7 @@
 import cv2
 from flask import Flask, Response, render_template, jsonify
 import threading
+import logging
 
 from ImageProcessor import ImageProcessor
 from drowsiness.EAR import DrowsinessDetector  # Import DrowsinessDetector
@@ -10,23 +11,32 @@ output_frame = None
 lock = threading.Lock()
 verification_results = []
 
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
 def flask_stream():
     global output_frame
     while True:
         with lock:
             if output_frame is None:
+                logging.debug("Output frame is None")
                 continue
             (flag, encoded_image) = cv2.imencode(".jpg", output_frame)
             if not flag:
+                logging.error("Failed to encode image")
                 continue
-        yield(b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded_image) + b'\r\n')
+        logging.debug("Streaming frame")
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded_image) + b'\r\n')
 
 @app.route("/video_feed")
 def video_feed():
+    logging.debug("Video feed requested")
     return Response(flask_stream(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 @app.route("/")
 def index():
+    logging.debug("Index page requested")
     return render_template("index.html")
 
 @app.route("/verify_results")
@@ -34,30 +44,31 @@ def verify_results():
     global verification_results
     with lock:
         results = verification_results.copy()
+    logging.debug(f"Verification results: {results}")
     return jsonify(results)
 
 def process_camera_feed(image_processor, drowsiness_detector=None):
     global output_frame, verification_results
+    logging.debug("Starting camera feed processing")
     cap = cv2.VideoCapture(0)  # Use the appropriate camera index
     if not cap.isOpened():
-        print("Error: Could not open video capture")
+        logging.error("Error: Could not open video capture")
         return
 
     try:
         while True:
             ret, frame = cap.read()
             if not ret:
-                print("Failed to grab frame")
+                logging.error("Failed to grab frame")
                 break
 
+            logging.debug("Processing frame")
             embeddings = image_processor.process_image(frame)
             if embeddings is None or len(embeddings.embeddings) == 0:
-                print("No faces detected")
-                image_with_landmarks = frame
+                logging.info("No faces detected")
+                image_with_landmarks = frame.copy()
             else:
-                for item_index in range(len(embeddings.embeddings)):
-                    bbox = embeddings.detection_faces.boxes[item_index]
-                    ff = frame.copy()
+                ff = frame.copy()
 
                 # Run face detection on the frame
                 image_with_detections = image_processor.draw_detections(ff)
@@ -82,6 +93,7 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
 
             with lock:
                 output_frame = image_with_landmarks.copy()
+                logging.debug("Updated output frame")
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -90,7 +102,13 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
         cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    image_processor = ImageProcessor(model_architecture='mediapipe', verbose=False)
+    logging.debug("Starting Flask app")
+    image_processor = ImageProcessor(model_architecture='mediapipe', verbose=True)
     drowsiness_detector = DrowsinessDetector()  # Initialize DrowsinessDetector
-    threading.Thread(target=process_camera_feed, args=(image_processor, drowsiness_detector)).start()
+
+    # Start the camera feed processing in a separate thread
+    camera_thread = threading.Thread(target=process_camera_feed, args=(image_processor, drowsiness_detector))
+    camera_thread.start()
+
+    # Start the Flask app
     app.run(host='0.0.0.0', port=9000, debug=True, use_reloader=True)

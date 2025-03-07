@@ -28,7 +28,8 @@ class DrowsinessDetector:
         """Plays alarm sound inside Docker using PulseAudio"""
         try:
             # subprocess.Popen(["paplay", self.alarm_path])
-            print(" Alarm triggered! Playing sound...")
+            # print(" Alarm triggered! Playing sound...")
+            pass
         except Exception as e:
             print(f" Error playing alarm: {e}")
 
@@ -60,7 +61,7 @@ class DrowsinessDetector:
             self.count = 0  # Reset counter if eyes are open
 
         if self.count >= self.alarm_threshold:
-            print("Drowsiness Detected! Playing Alarm!")
+            # print("Drowsiness Detected! Playing Alarm!")
             cv2.putText(image, "DROWSINESS ALERT!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
             self.play_alarm()  # Trigger alarm sound
 
