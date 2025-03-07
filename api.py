@@ -16,6 +16,8 @@ logging.basicConfig(level=logging.DEBUG)
 
 def flask_stream():
     global output_frame
+    # global camera_thread
+    # camera_thread.start()
     while True:
         with lock:
             if output_frame is None:
@@ -29,19 +31,23 @@ def flask_stream():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded_image) + b'\r\n')
 
+@app.route("/")
+def index():
+    global camera_thread
+    camera_thread.start()
+    logging.debug("Index page requested")
+    return render_template("index.html")
+
 @app.route("/video_feed")
 def video_feed():
     logging.debug("Video feed requested")
     return Response(flask_stream(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
-@app.route("/")
-def index():
-    logging.debug("Index page requested")
-    return render_template("index.html")
-
 @app.route("/verify_results")
 def verify_results():
     global verification_results
+    # global camera_thread
+    # camera_thread.start()
     with lock:
         results = verification_results.copy()
     logging.debug(f"Verification results: {results}")
@@ -66,7 +72,6 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
             embeddings = image_processor.process_image(frame)
             if embeddings is None or len(embeddings.embeddings) == 0:
                 logging.info("No faces detected")
-                image_with_landmarks = frame.copy()
             else:
                 ff = frame.copy()
 
@@ -106,9 +111,10 @@ if __name__ == "__main__":
     image_processor = ImageProcessor(model_architecture='mediapipe', verbose=True)
     drowsiness_detector = DrowsinessDetector()  # Initialize DrowsinessDetector
 
+    global camera_thread
     # Start the camera feed processing in a separate thread
     camera_thread = threading.Thread(target=process_camera_feed, args=(image_processor, drowsiness_detector))
-    camera_thread.start()
+    # camera_thread.start()
 
     # Start the Flask app
-    app.run(host='0.0.0.0', port=9000, debug=True, use_reloader=True)
+    app.run(host='0.0.0.0', port=9000, debug=False, use_reloader=True)
