@@ -37,7 +37,7 @@ The system consists of two main services:
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/HtmMhmd/face_recognizer.git
    cd face_recognizer
    ```
 
@@ -112,23 +112,36 @@ docker exec -it face_recognizer_container_face_recognizer_1 bash
 
 ## Project Structure
 
-```
-├── __init__.py
-├── add_user.py             # Script to add new users
-├── api.py                  # Main API and web server
-├── CameraUtilis/           # Camera handling utilities
-├── database/               # Database related files
-├── docker-compose.yaml     # Docker Compose configuration
-├── Dockerfile              # Main service Dockerfile
-├── Dockerfile.db           # Database service Dockerfile
-├── ImageUtilis/            # Image processing utilities
-├── Model/                  # ML models
-│   ├── OpencvDetector/     # OpenCV face detection files
-│   └── ...
-├── requirements.txt        # Python dependencies
-├── templates/              # HTML templates
-└── UsersDatabaseHandeler/  # User database management
-```
+
+## Root Files
+- [__init__.py](__init__.py): Python package initialization file
+- [add_user.py](add_user.py): Script to add new users to the face recognition database
+- [api.py](api.py): Main web server and REST API implementation
+- [main.py](main.py): Main application entry point
+- [docker-compose.yaml](docker-compose.yaml): Configuration for running the entire system with Docker Compose
+- [Dockerfile](Dockerfile): Container configuration for the main face recognition service
+- [Dockerfile.db](Dockerfile.db): Container configuration for the database service
+- [requirements.txt](requirements.txt): Lists all Python dependencies
+
+## Directories
+- [CameraUtilis](CameraUtilis/): Utilities for camera handling and video stream processing
+- [database](database/): Database implementations and storage logic
+- [ImageUtilis](ImageUtilis/): Image processing functions for preprocessing face images
+- [Model](Model/): Contains all machine learning models
+  - [OpencvDetector](Model/OpencvDetector/): OpenCV Haar cascade classifier (faces.xml) used for face detection
+- [templates](templates/): HTML templates for the web interface (includes [index.html](templates/index.html))
+- [UsersDatabaseHandeler](UsersDatabaseHandeler/): Logic for managing user embeddings in the database
+- [Align](Align/): Algorithms for aligning detected faces to improve recognition accuracy
+- [Landmark](Landmark/): Facial landmark detection for identifying key facial features
+- [Verify](Verify/): Verification logic for comparing face embeddings
+- [drowsiness](drowsiness/): Likely contains drowsiness detection algorithms
+
+## Additional Components
+- __pycache__: Contains compiled Python bytecode
+- .vscode: Visual Studio Code configuration settings
+- .gitignore: Specifies files to be ignored by Git
+
+The system uses OpenCV's Haar cascade classifier for face detection and a FaceNet model that generates 512-dimensional embeddings for face recognition. It's deployed as two Docker containers: one for face recognition and one for the database service.
 
 ## Model Information
 
@@ -137,6 +150,8 @@ The system uses a cascade classifier for face detection, located in faces.xml. F
 ## Database Structure
 
 User embeddings are stored in a CSV format with 512 embedding values plus the username. The database handling is managed by the `EmbeddingCSVHandler` class.
+
+SQLlite database 
 
 ## License
 

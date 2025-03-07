@@ -29,7 +29,7 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
                 break
 
             # Resize the frame
-            # frame = cv2.resize(frame, (480, 360))
+            frame = cv2.resize(frame, (480, 360))
 
             embeddings = image_processor.process_image(frame)
             if embeddings is None or len(embeddings.embeddings) == 0:
