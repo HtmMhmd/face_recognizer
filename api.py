@@ -67,12 +67,13 @@ def process_camera_feed(image_processor, drowsiness_detector=None):
             if not ret:
                 logging.error("Failed to grab frame")
                 break
-            
+
             # Resize the frame
             frame = cv2.resize(frame, (480, 360))
 
             logging.debug("Processing frame")
 
+            image_with_landmarks = frame.copy()
             embeddings = image_processor.process_image(frame)
             if embeddings is None or len(embeddings.embeddings) == 0:
                 logging.info("No faces detected")
