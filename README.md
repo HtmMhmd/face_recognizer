@@ -174,17 +174,41 @@ SQLlite database
    git commit -m "Initialize DVC"
    ```
 
-3. Configure remote storage (examples):
+### Configuring Google Drive Remote Storage
+
+1. **Enable Google Drive API** (required to fix the 403 error):
+   - Visit the [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+   - Go to "APIs & Services" > "Library"
+   - Search for "Google Drive API" and enable it
+   - **Wait a few minutes** for the changes to take effect
+
+2. Set up authentication:
+   
+   **STEP 1: Using OAuth (Interactive)**
    ```bash
-   # For Google Drive
-   dvc remote add -d myremote gdrive://1A-WNl2MFxRXJnwdVWAChjzurea8BaiXU
+   dvc remote add -d myremote gdrive://your-folder-id
+   ```
+
+   **STEP 2: Using Service Account (Non-interactive, recommended for automation)**
+   - Create a service account in Google Cloud Console
+   - Go to "IAM & Admin" > "Service Accounts" > "Create Service Account"
+   - Provide a name and grant necessary permissions
+   - Create a key (JSON format) and download it
+
+   **STEP 3: Configure DVC to use the service account:**
+   ```bash
+   dvc remote modify myremote gdrive_use_service_account true
+
+   dvc remote modify myremote gdrive_service_account_json_file_path path/to/credentials.json
+   ```
+
+3. Add additional configuration if needed:
+   ```bash
+   # To bypass confirmation prompts for downloading potentially malicious files
+   dvc remote modify myremote gdrive_acknowledge_abuse true
    
-   # For AWS S3
-   dvc remote add -d myremote s3://your-bucket-name/path
-   
-   # For local storage
-   dvc remote add -d myremote /path/to/local/storage
-   
+   # Commit your DVC configuration
    git add .dvc/config
    git commit -m "Configure DVC remote storage"
    ```
@@ -193,18 +217,55 @@ SQLlite database
 
 1. Add your .tflite model to DVC:
    ```bash
-   dvc add models/face_recognition.tflite
+   dvc add Model/path/to/your/model.tflite
    ```
 
-2. Commit the changes to Git:
+2. Stop Git from tracking the model file:
    ```bash
-   git add models/.gitignore models/face_recognition.tflite.dvc
-   git commit -m "Add face recognition model"
+   git rm -r --cached 'Model/path/to/your/model.tflite'
    ```
 
-3. Push the model to remote storage:
+3. Commit the DVC file to Git:
+   ```bash
+   git add Model/path/to/your/model.tflite.dvc
+   git commit -m "Add model with DVC tracking"
+   ```
+
+4. Push the model to remote storage:
    ```bash
    dvc push
+   ```
+
+### Troubleshooting DVC with Google Drive
+
+1. **Error 403: Google Drive API not enabled**
+   - Follow the link in the error message to enable the Google Drive API
+   - Wait a few minutes for the change to take effect
+   - Try again with `dvc push`
+
+2. **Authentication issues with service account**
+   - Ensure the service account has access to the Google Drive folder
+   - Share the folder with the service account email address
+   - Make sure the JSON key file path is correct
+
+3. **Permission issues**
+   - Verify the folder ID is correct
+   - Ensure your account or service account has write access to the folder
+   - Try creating a new folder specifically for DVC storage
+
+4. **Alternative approach: Use a different remote**
+   If Google Drive continues to cause issues, consider alternatives:
+   ```bash
+   # Local remote
+   dvc remote add -d localremote /path/to/local/storage
+   
+   # AWS S3
+   pip install dvc[s3]
+   dvc remote add -d s3remote s3://bucket/path
+   
+   # Azure Blob Storage
+   pip install dvc[azure]
+   dvc remote add -d azremote azure://container/path
    ```
 
 ### Working with Model Versions
