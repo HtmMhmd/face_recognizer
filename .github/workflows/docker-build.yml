@@ -49,20 +49,19 @@ jobs:
         run: |
             SHORT_SHA=$(git rev-parse --short HEAD)
             echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
-            - name: Determine version
-            id: version
-            run: |
-              # Default version is 'latest'
-              VERSION="latest"
+      - name: Determine version
+        id: version
+        run: |
+            # Default version is 'latest'
+            VERSION="latest"
               
-              # If this is a tag push, extract version from tag
-              if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-                VERSION="${GITHUB_REF#refs/tags/v}"
-                echo "Building version: $VERSION"
-              fi
-              
-              echo "version=$VERSION" >> $GITHUB_OUTPUT
-
+            # If this is a tag push, extract version from tag
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "Building version: $VERSION"
+            fi
+            
+            echo "version=$VERSION" >> $GITHUB_OUTPUT  
           
     # Removed the redundant build step and kept only one
       - name: Build and push Docker images
