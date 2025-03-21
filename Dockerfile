@@ -3,23 +3,22 @@ FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
-# Install build dependencies
+# Install minimal build dependencies for OpenCV headless
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libgl1-mesa-dev \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 # Create and activate virtual environment
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python dependencies in the virtual environment
+# Install Python dependencies with opencv-headless instead of full opencv
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip uninstall -y opencv-python opencv-contrib-python && \
+    pip install --no-cache-dir opencv-python-headless && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
@@ -30,13 +29,9 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install runtime dependencies for OpenCV
+# Install minimal runtime dependencies for OpenCV headless
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
     libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the virtual environment from builder
@@ -58,10 +53,9 @@ COPY --from=builder /app/UsersDatabaseHandeler/ /app/UsersDatabaseHandeler/
 COPY --from=builder /app/ImageUtilis/ /app/ImageUtilis/
 COPY --from=builder /app/CameraUtilis/ /app/CameraUtilis/
 
-# Set environment variables for display and audio
-ENV DISPLAY=:0
-ENV PULSE_SERVER=unix:/run/user/1000/pulse/native
-ENV XDG_RUNTIME_DIR=/run/user/1000
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 
 # Expose the Flask port
 EXPOSE 9000
