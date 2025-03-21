@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 COPY . .
 
 # Stage 2: Runtime image using Chainguard Python
-FROM cgr.dev/chainguard/python:latest-dev
+FROM chainguard/python:3.10
 
 WORKDIR /app
 
@@ -30,12 +30,12 @@ USER nonroot
 
 # Install runtime dependencies for OpenCV
 # Note: Chainguard images use apk for package management
-RUN apk --no-cache add \
-    libstdc++ \
-    libgcc \
-    mesa-gl \
-    glib \
-    pulseaudio
+# RUN apk --no-cache add \
+#     libstdc++ \
+#     libgcc \
+#     mesa-gl \
+#     glib \
+#     pulseaudio
 
 # Copy Python dependencies from builder
 COPY --from=builder --chown=nonroot:nonroot /root/.local /home/nonroot/.local
