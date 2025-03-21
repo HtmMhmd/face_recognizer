@@ -136,16 +136,10 @@ docker exec -it face_recognizer_container_face_recognizer_1 bash
 - [Verify](Verify/): Verification logic for comparing face embeddings
 - [drowsiness](drowsiness/): Likely contains drowsiness detection algorithms
 
-## Additional Components
-- __pycache__: Contains compiled Python bytecode
-- .vscode: Visual Studio Code configuration settings
-- .gitignore: Specifies files to be ignored by Git
-
-The system uses OpenCV's Haar cascade classifier for face detection and a FaceNet model that generates 512-dimensional embeddings for face recognition. It's deployed as two Docker containers: one for face recognition and one for the database service.
 
 ## Model Information
 
-The system uses a cascade classifier for face detection, located in faces.xml. For face recognition, it employs a TFLite model to generate 512-dimensional face embeddings.
+The system uses OpenCV's Haar cascade classifier for face detection and a FaceNet model that generates 512-dimensional embeddings for face recognition. It's deployed as two Docker containers: one for face recognition and one for the database service.
 
 ## Database Structure
 
@@ -153,6 +147,7 @@ User embeddings are stored in a CSV format with 512 embedding values plus the us
 
 SQLlite database 
 
+---
 ## DVC Tutorial for Managing TFLite Models
 
 ### What is DVC?
@@ -317,6 +312,85 @@ python your_script.py
 ```
 
 For more information, visit the [DVC documentation](https://dvc.org/doc).
+
+## CI/CD with GitHub Actions
+
+This project uses GitHub Actions to automatically build and push Docker images for multiple architectures (x86_64 and ARM/Raspberry Pi) to Docker Hub.
+
+### Workflow Overview
+
+The GitHub Actions workflow:
+- Builds Docker images for both x86_64 (AMD64) and ARM architectures (Raspberry Pi 4)
+- Tags the images with version numbers and architecture identifiers
+- Pushes the images to a private Docker Hub repository
+- Creates multi-architecture manifests for easy deployment
+
+### Setup Instructions
+
+To set up the CI/CD pipeline:
+
+1. **Create Docker Hub Repository**:
+   - Create a private repository on Docker Hub for your images
+
+2. **Configure GitHub Secrets**:
+   In your GitHub repository, go to Settings > Secrets and add:
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username
+   - `DOCKERHUB_TOKEN`: Your Docker Hub access token (create in Docker Hub account settings)
+
+3. **Trigger Workflow**:
+   - Automatically triggered on:
+     - Pushes to the main branch
+     - Creating version tags (e.g., v1.0.0)
+   - Can be manually triggered from the Actions tab
+
+### Image Tagging Strategy
+
+The workflow creates several tags:
+- `latest-amd64`: Latest x86_64 build
+- `latest-arm`: Latest ARM build (Raspberry Pi)
+- `v1.0.0-amd64`: Version-specific x86_64 build
+- `v1.0.0-arm`: Version-specific ARM build
+- `latest`: Multi-architecture image
+- `v1.0.0`: Version-specific multi-architecture image
+
+### Using the Built Images
+
+To use the appropriate image for your architecture:
+
+For x86_64 systems:
+```bash
+docker pull yourusername/face_recognizer:latest-amd64
+# or specific version
+docker pull yourusername/face_recognizer:v1.0.0-amd64
+```
+
+For Raspberry Pi:
+```bash
+docker pull yourusername/face_recognizer:latest-arm
+# or specific version
+docker pull yourusername/face_recognizer:v1.0.0-arm
+```
+
+Using multi-architecture image (automatically selects correct architecture):
+```bash
+docker pull yourusername/face_recognizer:latest
+```
+
+### Creating a New Release
+
+To create a new release and trigger the workflow:
+
+1. Create and push a new tag:
+   ```bash
+   git tag -a v1.0.0 -m "Release v1.0.0"
+   git push origin v1.0.0
+   ```
+
+2. GitHub Actions will automatically build and tag the Docker images with this version
+
+### Workflow File
+
+The workflow is defined in `.github/workflows/docker-build.yml`. You can view and modify it to customize the build process.
 
 ## License
 
