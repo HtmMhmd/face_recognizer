@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 COPY . .
 
 # Stage 2: Runtime image using Chainguard Python
-FROM cgr.dev/chainguard/python:3.10-dev
+FROM cgr.dev/chainguard/python:latest-dev
 
 WORKDIR /app
 
@@ -66,4 +66,4 @@ ENV XDG_RUNTIME_DIR=/run/user/1000
 EXPOSE 9000
 
 # Command to run the application
-CMD ["python", "api.py"]
+# CMD ["python", "api.py"]
