@@ -77,21 +77,26 @@ jobs:
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:buildcache-arm
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:buildcache-arm,mode=max
 
-      # Step 8: Create and push multi-architecture manifest with fixed references
+     # Step 8: Create and push multi-architecture manifest with fixed references
       - name: Create manifest and push multi-arch image
         if: github.event_name != 'pull_request'
         run: |
-          # Enable experimental features to use docker manifest command
-          echo '{"experimental": true}' | sudo tee /etc/docker/daemon.json
-          sudo systemctl restart docker
-          
-          # If this was triggered by a version tag, also create a versioned manifest
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-            docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:$VERSION \
-              ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:amd64-$VERSION \
-              ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:arm64-$VERSION
-            docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:$VERSION
-          fi
-          
-          docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest
+           # Enable experimental features (must be TRUE for manifest command)
+           echo '{"experimental": true}' | sudo tee /etc/docker/daemon.json
+           sudo systemctl restart docker
+           
+           # Create a manifest for latest that includes both architectures
+           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest \
+           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:amd64-${{ steps.meta.outputs.version || 'latest' }} \
+           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:arm64-${{ steps.meta.outputs.version || 'latest' }}
+           
+           # If this was triggered by a version tag, also create a versioned manifest
+           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+           VERSION=${GITHUB_REF#refs/tags/v}
+           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:$VERSION \
+               --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:amd64-$VERSION \
+               --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:arm64-$VERSION
+           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:$VERSION
+           fi
+            
+           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest
