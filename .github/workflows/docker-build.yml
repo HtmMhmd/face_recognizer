@@ -86,17 +86,9 @@ jobs:
            sudo systemctl restart docker
            
            # Create a manifest for latest that includes both architectures
-           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest \
-           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:amd64-${{ steps.meta.outputs.version || 'latest' }} \
-           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:arm64-${{ steps.meta.outputs.version || 'latest' }}
+           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest \
+           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:amd64-${{ steps.meta.outputs.version || 'latest' }} \
+           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:arm64-${{ steps.meta.outputs.version || 'latest' }}
            
-           # If this was triggered by a version tag, also create a versioned manifest
-           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-           VERSION=${GITHUB_REF#refs/tags/v}
-           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:$VERSION \
-               --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:amd64-$VERSION \
-               --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:arm64-$VERSION
-           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:$VERSION
-           fi
-            
-           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest
+
+           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest
