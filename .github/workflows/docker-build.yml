@@ -1,103 +1,80 @@
 name: Build and Push Docker Images
 
-# Defines when this workflow will run
 on:
   push:
-    branches: [ main ]    # Run when code is pushed to main branch
+    branches: [ main ]
     tags:
-      - 'v*'              # Run when a version tag is pushed (e.g., v1.0.0)
+      - 'v*'
   pull_request:
-    branches: [ main ]    # Run when a PR targets the main branch
-  workflow_dispatch:      # Allow manual triggering from GitHub UI
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+    runs-on: ubuntu-latest
     steps:
-      # Step 1: Check out the repository code
       - name: Checkout
-        uses: actions/checkout@v3  # Standard action to clone the repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for tags
 
-      # Step 2: Set up QEMU for multi-architecture builds
-      # This allows Docker to emulate ARM processors on x86 machines
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: 'arm64,arm64'  # Enable ARM emulation for Raspberry Pi builds
+          platforms: 'arm64,amd64'  # Fixed duplicated platforms
 
-      # Step 3: Set up Docker Buildx for multi-architecture builds
-      # Buildx is a Docker CLI plugin that extends docker build with multi-arch support
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Step 4: Log in to Docker Hub with credentials stored in GitHub Secrets
       - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}  # Your Docker Hub username
-          password: ${{ secrets.DOCKERHUB_TOKEN }}     # Your Docker Hub access token
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Step 5: Extract metadata for Docker tags based on Git context
-      # This creates appropriate tags for branches, PRs, and version tags
       - name: Extract metadata
-        id: meta  # ID to reference this step later
+        id: meta
         uses: docker/metadata-action@v4
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition  # Base image name
-          tags: |  # Tag generation rules
-            type=ref,event=branch                  # Tag with branch name
-            type=ref,event=pr                      # Tag with PR number
-            type=semver,pattern={{version}}        # Tag with full semantic version (v1.0.0)
-            type=semver,pattern={{major}}.{{minor}}  # Tag with major.minor version (v1.0)
-            type=sha,format=short                  # Tag with git SHA short form
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
 
-                # Step to generate incremental version number
       - name: Generate version number
         id: version
         run: |
-            # Get the latest version tag (if any)
             LATEST_TAG=$(git tag --sort=-v:refname | grep "^v[0-9]*\.[0-9]*\.[0-9]*$" | head -n 1 || echo "v0.0.0")
-            
-            # Extract components
             VERSION=${LATEST_TAG#v}
             MAJOR=$(echo $VERSION | cut -d. -f1)
             MINOR=$(echo $VERSION | cut -d. -f2)
             PATCH=$(echo $VERSION | cut -d. -f3)
             
-            # For main branch pushes, increment patch version
             if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
                 PATCH=$((PATCH + 1))
             fi
             
-            # For version tags, use the tag as is
             if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
                 NEW_VERSION=${GITHUB_REF#refs/tags/v}
             else
                 NEW_VERSION="$MAJOR.$MINOR.$PATCH"
             fi
             
-            # Set output variable for use in later steps
             echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
             echo "Generated version: $NEW_VERSION"
-      # Step 6: Build and push x86_64 (AMD64) image
-      - name: Build and push x86_64 image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: "linux/amd64,linux/arm64/v8 "   # Single platform to avoid manifest list issues
-          push: true
-          # Specify a clear single-architecture tag
-          tags: |
-        # Step 6: Build and push images
+
+      # Removed the redundant build step and kept only one
       - name: Build and push Docker images
         uses: docker/build-push-action@v5
         with:
             context: .
             file: ./Dockerfile
-            platforms: "linux/amd64,linux/arm64/v8"
+            platforms: linux/amd64,linux/arm64/v8
             push: true
             tags: |
-                "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest"
-                "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ steps.version.outputs.new_version }}"
-                "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ github.ref_name }}"
+                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest
+                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ steps.version.outputs.new_version }}
+                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ github.ref_name }}
