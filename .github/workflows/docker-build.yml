@@ -51,6 +51,34 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}  # Tag with major.minor version (v1.0)
             type=sha,format=short                  # Tag with git SHA short form
 
+                # Step to generate incremental version number
+      - name: Generate version number
+        id: version
+        run: |
+            # Get the latest version tag (if any)
+            LATEST_TAG=$(git tag --sort=-v:refname | grep "^v[0-9]*\.[0-9]*\.[0-9]*$" | head -n 1 || echo "v0.0.0")
+            
+            # Extract components
+            VERSION=${LATEST_TAG#v}
+            MAJOR=$(echo $VERSION | cut -d. -f1)
+            MINOR=$(echo $VERSION | cut -d. -f2)
+            PATCH=$(echo $VERSION | cut -d. -f3)
+            
+            # For main branch pushes, increment patch version
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+                PATCH=$((PATCH + 1))
+            fi
+            
+            # For version tags, use the tag as is
+            if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+                NEW_VERSION=${GITHUB_REF#refs/tags/v}
+            else
+                NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+            fi
+            
+            # Set output variable for use in later steps
+            echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+            echo "Generated version: $NEW_VERSION"
       # Step 6: Build and push x86_64 (AMD64) image
       - name: Build and push x86_64 image
         uses: docker/build-push-action@v5
@@ -61,5 +89,15 @@ jobs:
           push: true
           # Specify a clear single-architecture tag
           tags: |
-            "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest"
-            "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{github.ref_name}}"
+        # Step 6: Build and push images
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v5
+        with:
+            context: .
+            file: ./Dockerfile
+            platforms: "linux/amd64,linux/arm64/v8"
+            push: true
+            tags: |
+                "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest"
+                "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ steps.version.outputs.new_version }}"
+                "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ github.ref_name }}"
