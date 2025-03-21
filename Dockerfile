@@ -13,49 +13,50 @@ RUN apt-get update && apt-get install -y \
     libxrender-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Create and activate virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies in the virtual environment
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY . .
 
-# Stage 2: Runtime image using Chainguard Python
-FROM chainguard/python:latest
+# Stage 2: Runtime image
+FROM python:3.10-slim
 
 WORKDIR /app
 
-# Set up non-root user for better security
-USER nonroot
-
 # Install runtime dependencies for OpenCV
-# Note: Chainguard images use apk for package management
-# RUN apk --no-cache add \
-#     libstdc++ \
-#     libgcc \
-#     mesa-gl \
-#     glib \
-#     pulseaudio
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from builder
-COPY --from=builder --chown=nonroot:nonroot /root/.local /home/nonroot/.local
+# Copy the virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
 
-# Set Python path to find the installed packages
-ENV PATH=/home/nonroot/.local/bin:$PATH
-ENV PYTHONPATH=/home/nonroot/.local/lib/python3.13/site-packages:$PYTHONPATH
+# Make sure we use the virtualenv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy only the necessary application files
-COPY --from=builder --chown=nonroot:nonroot /app/api.py /app/
-COPY --from=builder --chown=nonroot:nonroot /app/ImageProcessor.py /app/
-COPY --from=builder --chown=nonroot:nonroot /app/templates/ /app/templates/
-COPY --from=builder --chown=nonroot:nonroot /app/drowsiness/ /app/drowsiness/
-COPY --from=builder --chown=nonroot:nonroot /app/Model/ /app/Model/
-COPY --from=builder --chown=nonroot:nonroot /app/Align/ /app/Align/
-COPY --from=builder --chown=nonroot:nonroot /app/Landmark/ /app/Landmark/
-COPY --from=builder --chown=nonroot:nonroot /app/Verify/ /app/Verify/
-COPY --from=builder --chown=nonroot:nonroot /app/UsersDatabaseHandeler/ /app/UsersDatabaseHandeler/
-COPY --from=builder --chown=nonroot:nonroot /app/ImageUtilis/ /app/ImageUtilis/
-COPY --from=builder --chown=nonroot:nonroot /app/CameraUtilis/ /app/CameraUtilis/
+COPY --from=builder /app/api.py /app/
+COPY --from=builder /app/ImageProcessor.py /app/
+COPY --from=builder /app/templates/ /app/templates/
+COPY --from=builder /app/drowsiness/ /app/drowsiness/
+COPY --from=builder /app/Model/ /app/Model/
+COPY --from=builder /app/Align/ /app/Align/
+COPY --from=builder /app/Landmark/ /app/Landmark/
+COPY --from=builder /app/Verify/ /app/Verify/
+COPY --from=builder /app/UsersDatabaseHandeler/ /app/UsersDatabaseHandeler/
+COPY --from=builder /app/ImageUtilis/ /app/ImageUtilis/
+COPY --from=builder /app/CameraUtilis/ /app/CameraUtilis/
 
 # Set environment variables for display and audio
 ENV DISPLAY=:0
@@ -66,4 +67,4 @@ ENV XDG_RUNTIME_DIR=/run/user/1000
 EXPOSE 9000
 
 # Command to run the application
-CMD ["python", "api.py"]
+ENTRYPOINT ["python", "api.py"]

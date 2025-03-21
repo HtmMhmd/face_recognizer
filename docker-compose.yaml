@@ -1,10 +1,10 @@
 version: '3.8'
 services:
   face_recognizer:
-    image: htmmhmd/face_recognition:1.1.1
-    # build: 
-    #   context: .
-    #   dockerfile: Dockerfile
+    image: htmmhmd/face_recognition:latest
+    build: 
+      context: .
+      dockerfile: Dockerfile
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -26,7 +26,7 @@ services:
       - "8000:8000"  # If needed for your application
       - "9000:9000"
 
-    # command: ["python", "api.py"]
+    command: ["python", "api.py"]
 
   db_service:
     image: htmmhmd/face_recognizer-db_service:latest
