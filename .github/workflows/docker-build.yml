@@ -43,7 +43,7 @@ jobs:
         id: meta  # ID to reference this step later
         uses: docker/metadata-action@v4
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer  # Base image name
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition  # Base image name
           tags: |  # Tag generation rules
             type=ref,event=branch                  # Tag with branch name
             type=ref,event=pr                      # Tag with PR number
