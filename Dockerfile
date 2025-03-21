@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 COPY . .
 
 # Stage 2: Runtime image using Chainguard Python
-FROM chainguard/python:latest
+FROM python:3.10-alpine
 
 WORKDIR /app
 
@@ -42,7 +42,7 @@ COPY --from=builder --chown=nonroot:nonroot /root/.local /home/nonroot/.local
 
 # Set Python path to find the installed packages
 ENV PATH=/home/nonroot/.local/bin:$PATH
-ENV PYTHONPATH=/home/nonroot/.local/lib/python3.13/site-packages:$PYTHONPATH
+ENV PYTHONPATH=/home/nonroot/.local/lib/python3.10/site-packages:$PYTHONPATH
 
 # Copy only the necessary application files
 COPY --from=builder --chown=nonroot:nonroot /app/api.py /app/
