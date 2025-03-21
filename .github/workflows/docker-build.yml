@@ -60,4 +60,3 @@ jobs:
             tags: |
                 ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest
                 ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ github.sha }}
-                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ github.ref_name }}
