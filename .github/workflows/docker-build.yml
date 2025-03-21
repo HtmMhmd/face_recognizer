@@ -60,9 +60,9 @@ jobs:
           platforms: linux/amd64    # Single platform to avoid manifest list issues
           push: ${{ github.event_name != 'pull_request' }}
           # Specify a clear single-architecture tag
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:amd64-${{ steps.meta.outputs.version || 'latest' }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:buildcache-amd64
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:buildcache-amd64,mode=max
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:amd64-${{ steps.meta.outputs.version || 'latest' }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-amd64
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-amd64,mode=max
 
       # Step 7: Build and push ARM image for Raspberry Pi
       - name: Build and push ARM image (Raspberry Pi)
@@ -73,9 +73,9 @@ jobs:
           platforms: linux/arm64/v8    # Single platform to avoid manifest list issues
           push: ${{ github.event_name != 'pull_request' }}
           # Specify a clear single-architecture tag
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:arm64-${{ steps.meta.outputs.version || 'latest' }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:buildcache-arm
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:buildcache-arm,mode=max
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:arm64-${{ steps.meta.outputs.version || 'latest' }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-arm
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-arm,mode=max
 
      # Step 8: Create and push multi-architecture manifest with fixed references
       - name: Create manifest and push multi-arch image
@@ -86,9 +86,9 @@ jobs:
            sudo systemctl restart docker
            
            # Create a manifest for latest that includes both architectures
-           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest \
-           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:amd64-${{ steps.meta.outputs.version || 'latest' }} \
-           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:arm64-${{ steps.meta.outputs.version || 'latest' }}
+           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest \
+           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:amd64-${{ steps.meta.outputs.version || 'latest' }} \
+           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:arm64-${{ steps.meta.outputs.version || 'latest' }}
            
 
-           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest
+           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest
