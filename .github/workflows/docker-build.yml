@@ -23,7 +23,7 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
         with:
-          platforms: 'arm64,arm'  # Enable ARM emulation for Raspberry Pi builds
+          platforms: 'arm64,arm64'  # Enable ARM emulation for Raspberry Pi builds
 
       # Step 3: Set up Docker Buildx for multi-architecture builds
       # Buildx is a Docker CLI plugin that extends docker build with multi-arch support
@@ -53,42 +53,13 @@ jobs:
 
       # Step 6: Build and push x86_64 (AMD64) image
       - name: Build and push x86_64 image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64    # Single platform to avoid manifest list issues
-          push: ${{ github.event_name != 'pull_request' }}
+          platforms: "linux/amd64,linux/arm64/v8 "   # Single platform to avoid manifest list issues
+          push: true
           # Specify a clear single-architecture tag
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:amd64-${{ steps.meta.outputs.version || 'latest' }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-amd64
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-amd64,mode=max
-
-      # Step 7: Build and push ARM image for Raspberry Pi
-      - name: Build and push ARM image (Raspberry Pi)
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/arm64/v8    # Single platform to avoid manifest list issues
-          push: ${{ github.event_name != 'pull_request' }}
-          # Specify a clear single-architecture tag
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:arm64-${{ steps.meta.outputs.version || 'latest' }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-arm
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:buildcache-arm,mode=max
-
-     # Step 8: Create and push multi-architecture manifest with fixed references
-      - name: Create manifest and push multi-arch image
-        if: github.event_name != 'pull_request'
-        run: |
-           # Enable experimental features (must be TRUE for manifest command)
-           echo '{"experimental": true}' | sudo tee /etc/docker/daemon.json
-           sudo systemctl restart docker
-           
-           # Create a manifest for latest that includes both architectures
-           docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest \
-           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:amd64-${{ steps.meta.outputs.version || 'latest' }} \
-           --amend ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:arm64-${{ steps.meta.outputs.version || 'latest' }}
-           
-
-           docker manifest push ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest
+          tags: |
+            "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest"
+            "${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{github.ref_name}}"
