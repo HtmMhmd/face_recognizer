@@ -85,11 +85,6 @@ jobs:
           echo '{"experimental": true}' | sudo tee /etc/docker/daemon.json
           sudo systemctl restart docker
           
-          # Create a manifest for latest that includes both architectures (using specific arch tags)
-          docker manifest create ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:latest \
-            ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:amd64-${{ steps.meta.outputs.version || 'latest' }} \
-            ${{ secrets.DOCKERHUB_USERNAME }}/face_recognizer:arm64-${{ steps.meta.outputs.version || 'latest' }}
-          
           # If this was triggered by a version tag, also create a versioned manifest
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             VERSION=${GITHUB_REF#refs/tags/v}
