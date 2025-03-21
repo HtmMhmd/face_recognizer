@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 COPY . .
 
 # Stage 2: Runtime image using Chainguard Python
-FROM chainguard/python:3.10
+FROM chainguard/python:latest
 
 WORKDIR /app
 
