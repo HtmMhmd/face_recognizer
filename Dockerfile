@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --user -r requirements.txt
 COPY . .
 
 # Stage 2: Runtime image using Chainguard Python
-FROM cgr.dev/chainguard/python:3.10.16-dev
+FROM cgr.dev/chainguard/python:3.10-dev
 
 WORKDIR /app
 
