@@ -10,7 +10,6 @@ services:
       - QT_X11_NO_MITSHM=1
       - DB_API_URL=http://db_service:5000
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ./:/app:ro
       - face_db_data:/data:rw
     devices:
@@ -26,7 +25,7 @@ services:
       - "8000:8000"  # If needed for your application
       - "9000:9000"
 
-    command: ["apt install libgl1"]
+    command: ["python", "api.py"]
 
   db_service:
     image: htmmhmd/face_recognizer-db_service:latest
