@@ -20,7 +20,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt && \
     pip uninstall -y opencv-python opencv-contrib-python && \
-    pip install --no-cache-dir opencv-contrib-python-headless
+    pip install --no-cache-dir opencv-python-headless
 
 # Copy application files
 COPY . .
