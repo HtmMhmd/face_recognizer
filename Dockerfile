@@ -28,9 +28,10 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# # Install minimal runtime dependencies for OpenCV headless
+# Install runtime dependencies for OpenCV including libGL
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
+    libgl1 \     
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the virtual environment from builder
@@ -60,4 +61,4 @@ ENV PYTHONDONTWRITEBYTECODE=1
 EXPOSE 9000
 
 # Command to run the application
-ENTRYPOINT ["python", "api.py"]
+# ENTRYPOINT ["python", "api.py"]
