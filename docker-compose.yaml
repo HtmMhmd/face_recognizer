@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   face_recognizer:
-    image: htmmhmd/face_recognition:local
+    image: htmmhmd/face_recognition:latest
     build: 
       context: .
       dockerfile: Dockerfile

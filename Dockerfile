@@ -7,6 +7,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     build-essential \
     libglib2.0-0 \
+    libgl1 \
     cmake \
     && rm -rf /var/lib/apt/lists/*
 
@@ -30,6 +31,7 @@ WORKDIR /app
 # Install minimal runtime dependencies for OpenCV headless
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
+    libgl1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the virtual environment from builder
