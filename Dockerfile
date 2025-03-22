@@ -24,14 +24,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Stage 2: Runtime image
-FROM python:3.10-slim
+FROM python:3.10-alpine3.20
 
 WORKDIR /app
 
-# # Install minimal runtime dependencies for OpenCV headless
-RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+# Install minimal runtime dependencies for OpenCV headless using Alpine's apk
+RUN apk update && \
+    apk add --no-cache \
+    libgcc \
+    glib \
+    && rm -rf /var/cache/apk/*
 
 # Copy the virtual environment from builder
 COPY --from=builder /opt/venv /opt/venv
