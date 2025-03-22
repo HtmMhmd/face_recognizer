@@ -18,7 +18,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Install Python dependencies with opencv-headless instead of full opencv
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
-RUN    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 RUN    pip uninstall -y opencv-python opencv-contrib-python
 RUN    pip install --no-cache-dir opencv-python-headless
 
