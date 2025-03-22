@@ -19,8 +19,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-RUN    pip uninstall -y opencv-python opencv-contrib-python
-RUN    pip install --no-cache-dir opencv-python-headless
 
 # Copy application files
 COPY . .
