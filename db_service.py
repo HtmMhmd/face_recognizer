@@ -1,5 +1,4 @@
 from database.db_handler import FaceDatabase
-import numpy as np
 
 def main():
     db = FaceDatabase()
