@@ -151,8 +151,8 @@ def process_image_and_save(image_processor, image_path, output_path, show_gui=Fa
 
 # Main function
 def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_path=None, 
-         detector_type='mediapipe', enable_drowsiness=False, show_gui=False):
-    image_processor = ImageProcessor(model_architecture=detector_type, verbose=False)
+         detector_type='mediapipe', enable_drowsiness=False, show_gui=False, verbose=True):
+    image_processor = ImageProcessor(model_architecture=detector_type, verbose=verbose)
     drowsiness_detector = DrowsinessDetector() if enable_drowsiness else None
 
     if run_on_camera:

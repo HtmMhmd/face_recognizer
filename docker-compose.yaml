@@ -28,7 +28,7 @@ services:
     command: ["python", "api.py"]
 
   db_service:
-    image: htmmhmd/face_recognizer-db_service:latest
+    image: htmmhmd/face_recognition_db:latest
     # build: 
     #   context: .
     #   dockerfile: Dockerfile.db
