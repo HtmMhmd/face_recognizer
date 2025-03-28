@@ -55,7 +55,7 @@ jobs:
         with:
             context: .
             file: ./Dockerfile
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            platforms: linux/amd64,linux/arm64,linux/armv7
             push: ${{ github.event_name != 'pull_request' }}
             tags: |
                 ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest
@@ -106,7 +106,7 @@ jobs:
         with:
             context: .
             file: ./Dockerfile.db
-            platforms: linux/amd64,linux/arm64,linux/arm/v7
+            platforms: linux/amd64,linux/arm64,linux/armv7
             push: ${{ github.event_name != 'pull_request' }}
             tags: |
                 ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition_db:latest
