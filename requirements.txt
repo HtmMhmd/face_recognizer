@@ -1,6 +1,6 @@
 tflite-runtime==2.14.0
 numpy==1.26.4
-onnxruntime
+
 mediapipe==0.10.18
 requests==2.26.0
 opencv-contrib-python
