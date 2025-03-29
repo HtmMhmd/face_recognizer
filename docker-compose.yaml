@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   face_recognizer:
-    image:  htmmhmd/face_recognition:2.2
+    image:  htmmhmd/face_recognition:2.3.9
     # build: 
     #   context: .
     #   dockerfile: Dockerfile
@@ -28,7 +28,7 @@ services:
     command: ["python", "api.py"]
 
   db_service:
-    image: htmmhmd/face_recognition_db:latest
+    image: htmmhmd/face_recognition_db:2.3.9
     # build: 
     #   context: .
     #   dockerfile: Dockerfile.db
