@@ -1,5 +1,10 @@
 # Face Recognition System
 
+<img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9+-blue.svg">
+<img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg">
+<img alt="Docker" src="https://img.shields.io/badge/Docker-Supported-blue.svg">
+<img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-Powered-green.svg">
+
 This repository contains a comprehensive facial recognition system that can detect, align, and recognize faces using deep learning techniques. The system is containerized using Docker for easy deployment across different environments.
 
 ## Features
@@ -84,6 +89,184 @@ The system exposes several API endpoints:
 - `GET /video_feed`: Streams the webcam with face detection overlay
 - `GET /verify_results`: Shows verification results
 
+### API Usage Diagram
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌───────────────┐
+│                 │     │                  │     │               │
+│  Video Feed     │────►│  Face Detection  │────►│ Face Alignment│
+│                 │     │                  │     │               │
+└─────────────────┘     └──────────────────┘     └───────┬───────┘
+                                                         │
+                                                         ▼
+┌─────────────────┐     ┌──────────────────┐     ┌───────────────┐
+│                 │     │                  │     │               │
+│  Verification   │◄────│  Face Comparison │◄────│ Face Embedding│
+│  Result         │     │                  │     │ Generation    │
+└─────────────────┘     └────────┬─────────┘     └───────▲───────┘
+                                 │                       │
+                                 ▼                       │
+                        ┌──────────────────┐     ┌───────────────┐
+                        │                  │     │               │
+                        │  User Database   │─────│  User Data    │
+                        │  Lookup          │     │  Storage      │
+                        └──────────────────┘     └───────────────┘
+```
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CAMERA_INDEX` | Camera device index to use | `0` |
+| `DETECTION_CONFIDENCE` | Minimum confidence threshold for face detection | `0.8` |
+| `DATABASE_PATH` | Path to user database | `./database/users.csv` |
+| `API_PORT` | Port for the web interface and API | `8000` |
+| `DEBUG_MODE` | Enable debug logging | `false` |
+
+### Command Line Arguments
+
+| Argument | Description |
+|----------|-------------|
+| `--camera` | Camera index to use (overrides environment variable) |
+| `--confidence` | Detection confidence threshold |
+| `--database` | Path to user database file |
+| `--port` | Port for the web API server |
+| `--debug` | Enable debug mode |
+| `--no-ui` | Run without web interface |
+
+## 🔍 Detailed System Explanation
+
+The Face Recognition System implements a complete pipeline for detecting and recognizing faces:
+
+1. **Video Input Layer**
+   - Captures video frames from camera or file input
+   - Pre-processes frames for detection (resizing, color conversion)
+   - Manages frame rate and buffering
+
+2. **Detection Layer**
+   - Employs OpenCV Haar cascade classifier for face detection
+   - Identifies face regions within each frame
+   - Filters detections based on confidence threshold
+   - Outputs bounding box coordinates
+
+3. **Alignment Layer**
+   - Detects facial landmarks (eyes, nose, mouth)
+   - Calculates optimal rotation to align face
+   - Performs geometric transformation
+
+4. **Recognition Layer**
+   - Preprocesses aligned face images
+   - Generates 512-dimensional face embeddings
+   - Compares embeddings with stored user database
+   - Determines identity with confidence score
+
+### Key Components
+
+#### Face Detector
+
+The `FaceDetector` class handles the detection of faces in input frames:
+
+```python
+def detect_faces(self, frame):
+    """
+    Detect faces in a frame using Haar cascade classifier.
+    
+    Args:
+        frame: Input image frame
+        
+    Returns:
+        List of face bounding boxes (x, y, w, h)
+    """
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces = self.face_cascade.detectMultiScale(
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30)
+    )
+    return faces
+```
+
+#### Face Aligner
+
+The alignment module positions faces consistently for better recognition:
+
+```python
+def align_face(self, frame, face_bbox):
+    """
+    Align a detected face based on eye positions.
+    
+    Args:
+        frame: Input frame containing the face
+        face_bbox: Bounding box of the detected face (x, y, w, h)
+        
+    Returns:
+        Aligned face image
+    """
+    landmarks = self.landmark_detector.detect_landmarks(frame, face_bbox)
+    if landmarks is None:
+        return self._crop_face(frame, face_bbox)
+    
+    left_eye, right_eye = landmarks['left_eye'], landmarks['right_eye']
+    return self._align_by_eyes(frame, face_bbox, left_eye, right_eye)
+```
+
+#### Embedding Generator
+
+The system uses a FaceNet model to generate embeddings:
+
+```python
+def generate_embedding(self, face_img):
+    """
+    Generate a 512-dimensional face embedding.
+    
+    Args:
+        face_img: Preprocessed face image
+        
+    Returns:
+        512-dimensional embedding vector
+    """
+    # Ensure face image is properly sized
+    face_img = cv2.resize(face_img, (160, 160))
+    face_img = face_img.astype(np.float32) / 255.0
+    
+    # Generate embedding
+    embedding = self.model.predict(np.expand_dims(face_img, axis=0))[0]
+    return embedding / np.linalg.norm(embedding)
+```
+
+#### Database Handler
+
+User embeddings are stored and retrieved efficiently:
+
+```python
+def add_user(self, username, embedding):
+    """
+    Add a new user with their face embedding to the database.
+    
+    Args:
+        username: Unique identifier for the user
+        embedding: 512-dimensional face embedding
+        
+    Returns:
+        Boolean indicating success
+    """
+    if self.user_exists(username):
+        return False
+    
+    # Prepare data for insertion
+    user_data = [username] + list(embedding)
+    
+    # Add to database
+    with open(self.db_path, 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(user_data)
+    
+    return True
+```
+
 ## Docker Deployment
 
 ### Raspberry Pi Deployment
@@ -111,7 +294,6 @@ docker exec -it face_recognizer_container_face_recognizer_1 bash
 ```
 
 ## Project Structure
-
 
 ## Root Files
 - [__init__.py](__init__.py): Python package initialization file
