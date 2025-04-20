@@ -80,6 +80,18 @@ class FaceDatabase:
             print(f"Database error: {e}")
             raise
 
+    def get_all_users(self) -> list:
+        """
+        Get a list of all usernames in the database.
+        
+        Returns:
+            list: List of usernames
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            result = conn.execute('SELECT username FROM users').fetchall()
+            # Flatten the result list of tuples into a simple list of usernames
+            return [username[0] for username in result]
+
 # Example usage:
 if __name__ == '__main__':
     db = FaceDatabase()  # Adjust size as needed

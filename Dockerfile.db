@@ -1,31 +1,61 @@
-FROM python:3.10.16-slim
+# Stage 1: Builder
+FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
-# Install only necessary system dependencies
+# Install build dependencies if needed
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create and activate virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Copy only database requirements first
+COPY database/requirements.sql.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.sql.txt
+
+# Stage 2: Runtime image
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install only essential runtime dependencies
 RUN apt-get update && apt-get install -y \
     sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
+# Copy the virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
 
-# Upgrade pip and install Python packages
-RUN python3.10 -m pip install --no-cache-dir --upgrade pip
+# Make sure we use the virtualenv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Copy only database requirements first
-COPY database/requirements.sql.txt .
-RUN pip install --no-cache-dir -r requirements.sql.txt
-
-# Copy database-related files only
+# Copy only necessary database files
+COPY --from=builder /app/requirements.sql.txt .
 COPY database /app/database
 COPY db_service.py .
 
 # Create data directory with proper permissions
 RUN mkdir -p /data && \
-    chmod 777 /data && \
-    chown 1000:1000 /data
+    chmod 755 /data
 
 # Create non-root user
 RUN useradd -u 1000 -m dbuser && \
-    chown -R dbuser:dbuser /app/database
+    chown -R dbuser:dbuser /app/database /data
 
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV DB_PATH=/data/face_recognition.db
+
+# Switch to non-root user
 USER dbuser
+
+# Expose the database port if needed
+EXPOSE 5000
+
+# Command to run the database service
+CMD ["python", "db_service.py"]

@@ -1,0 +1,113 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-face-recognition:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        # with:
+        #   platforms: 'arm64,amd64,arm64v8'  # Fixed duplicated platforms
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+      - name: Determine version
+        id: version
+        run: |
+            # Default version is 'latest'
+            VERSION="latest"
+                
+            # If this is a tag push, extract version from tag
+            if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+                VERSION="${GITHUB_REF#refs/tags/v}"
+                echo "Building version: $VERSION"
+            elif [[ "${{ github.ref }}" == refs/heads/* ]]; then
+                # For branch pushes, extract the branch name
+                VERSION="${GITHUB_REF#refs/heads/}"
+                echo "Building branch version: $VERSION"
+            fi
+                
+            echo "version=$VERSION" >> $GITHUB_OUTPUT 
+        
+      - name: Build and push Face Recognition Docker images
+        uses: docker/build-push-action@v5
+        with:
+            context: .
+            file: ./Dockerfile
+            platforms: linux/amd64,linux/arm64/v8
+            push: ${{ github.event_name != 'pull_request' }}
+            tags: |
+                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:latest
+                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition:${{ steps.version.outputs.version }}
+
+  build-database:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Fetch all history for tags
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        # with:
+        #   platforms: 'arm64,amd64,arm64v8'
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+        
+      - name: Determine version
+        id: version
+        run: |
+            # Default version is 'latest'
+            VERSION="latest"
+                
+            # If this is a tag push, extract version from tag
+            if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+                VERSION="${GITHUB_REF#refs/tags/v}"
+                echo "Building version: $VERSION"
+            elif [[ "${{ github.ref }}" == refs/heads/* ]]; then
+                # For branch pushes, extract the branch name
+                VERSION="${GITHUB_REF#refs/heads/}"
+                echo "Building branch version: $VERSION"
+            fi
+                
+            echo "version=$VERSION" >> $GITHUB_OUTPUT 
+        
+      - name: Build and push Database Docker images
+        uses: docker/build-push-action@v5
+        with:
+            context: .
+            file: ./Dockerfile.db
+            platforms: linux/amd64,linux/arm64/v8
+            push: ${{ github.event_name != 'pull_request' }}
+            tags: |
+                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition_db:latest
+                ${{ secrets.DOCKERHUB_USERNAME }}/face_recognition_db:${{ steps.version.outputs.version }}

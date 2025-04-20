@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from db_handler import FaceDatabase
-import numpy as np
+from  numpy import frombuffer, float32
 import base64
 
 app = Flask(__name__)
@@ -12,7 +12,7 @@ def add_user():
     username = data['username']
     # Decode base64 embedding
     embedding_bytes = base64.b64decode(data['embedding'])
-    embedding = np.frombuffer(embedding_bytes, dtype=np.float32).reshape(512,1)
+    embedding = frombuffer(embedding_bytes, dtype=float32).reshape(512,1)
     db.add_user(username, embedding)
     return jsonify({"status": "success"})
 

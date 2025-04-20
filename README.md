@@ -1,10 +1,5 @@
 # Face Recognition System
 
-<img alt="Python 3.9+" src="https://img.shields.io/badge/python-3.9+-blue.svg">
-<img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg">
-<img alt="Docker" src="https://img.shields.io/badge/Docker-Supported-blue.svg">
-<img alt="OpenCV" src="https://img.shields.io/badge/OpenCV-Powered-green.svg">
-
 This repository contains a comprehensive facial recognition system that can detect, align, and recognize faces using deep learning techniques. The system is containerized using Docker for easy deployment across different environments.
 
 ## Features
@@ -89,184 +84,6 @@ The system exposes several API endpoints:
 - `GET /video_feed`: Streams the webcam with face detection overlay
 - `GET /verify_results`: Shows verification results
 
-### API Usage Diagram
-
-```
-┌─────────────────┐     ┌──────────────────┐     ┌───────────────┐
-│                 │     │                  │     │               │
-│  Video Feed     │────►│  Face Detection  │────►│ Face Alignment│
-│                 │     │                  │     │               │
-└─────────────────┘     └──────────────────┘     └───────┬───────┘
-                                                         │
-                                                         ▼
-┌─────────────────┐     ┌──────────────────┐     ┌───────────────┐
-│                 │     │                  │     │               │
-│  Verification   │◄────│  Face Comparison │◄────│ Face Embedding│
-│  Result         │     │                  │     │ Generation    │
-└─────────────────┘     └────────┬─────────┘     └───────▲───────┘
-                                 │                       │
-                                 ▼                       │
-                        ┌──────────────────┐     ┌───────────────┐
-                        │                  │     │               │
-                        │  User Database   │─────│  User Data    │
-                        │  Lookup          │     │  Storage      │
-                        └──────────────────┘     └───────────────┘
-```
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `CAMERA_INDEX` | Camera device index to use | `0` |
-| `DETECTION_CONFIDENCE` | Minimum confidence threshold for face detection | `0.8` |
-| `DATABASE_PATH` | Path to user database | `./database/users.csv` |
-| `API_PORT` | Port for the web interface and API | `8000` |
-| `DEBUG_MODE` | Enable debug logging | `false` |
-
-### Command Line Arguments
-
-| Argument | Description |
-|----------|-------------|
-| `--camera` | Camera index to use (overrides environment variable) |
-| `--confidence` | Detection confidence threshold |
-| `--database` | Path to user database file |
-| `--port` | Port for the web API server |
-| `--debug` | Enable debug mode |
-| `--no-ui` | Run without web interface |
-
-## 🔍 Detailed System Explanation
-
-The Face Recognition System implements a complete pipeline for detecting and recognizing faces:
-
-1. **Video Input Layer**
-   - Captures video frames from camera or file input
-   - Pre-processes frames for detection (resizing, color conversion)
-   - Manages frame rate and buffering
-
-2. **Detection Layer**
-   - Employs OpenCV Haar cascade classifier for face detection
-   - Identifies face regions within each frame
-   - Filters detections based on confidence threshold
-   - Outputs bounding box coordinates
-
-3. **Alignment Layer**
-   - Detects facial landmarks (eyes, nose, mouth)
-   - Calculates optimal rotation to align face
-   - Performs geometric transformation
-
-4. **Recognition Layer**
-   - Preprocesses aligned face images
-   - Generates 512-dimensional face embeddings
-   - Compares embeddings with stored user database
-   - Determines identity with confidence score
-
-### Key Components
-
-#### Face Detector
-
-The `FaceDetector` class handles the detection of faces in input frames:
-
-```python
-def detect_faces(self, frame):
-    """
-    Detect faces in a frame using Haar cascade classifier.
-    
-    Args:
-        frame: Input image frame
-        
-    Returns:
-        List of face bounding boxes (x, y, w, h)
-    """
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = self.face_cascade.detectMultiScale(
-        gray,
-        scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(30, 30)
-    )
-    return faces
-```
-
-#### Face Aligner
-
-The alignment module positions faces consistently for better recognition:
-
-```python
-def align_face(self, frame, face_bbox):
-    """
-    Align a detected face based on eye positions.
-    
-    Args:
-        frame: Input frame containing the face
-        face_bbox: Bounding box of the detected face (x, y, w, h)
-        
-    Returns:
-        Aligned face image
-    """
-    landmarks = self.landmark_detector.detect_landmarks(frame, face_bbox)
-    if landmarks is None:
-        return self._crop_face(frame, face_bbox)
-    
-    left_eye, right_eye = landmarks['left_eye'], landmarks['right_eye']
-    return self._align_by_eyes(frame, face_bbox, left_eye, right_eye)
-```
-
-#### Embedding Generator
-
-The system uses a FaceNet model to generate embeddings:
-
-```python
-def generate_embedding(self, face_img):
-    """
-    Generate a 512-dimensional face embedding.
-    
-    Args:
-        face_img: Preprocessed face image
-        
-    Returns:
-        512-dimensional embedding vector
-    """
-    # Ensure face image is properly sized
-    face_img = cv2.resize(face_img, (160, 160))
-    face_img = face_img.astype(np.float32) / 255.0
-    
-    # Generate embedding
-    embedding = self.model.predict(np.expand_dims(face_img, axis=0))[0]
-    return embedding / np.linalg.norm(embedding)
-```
-
-#### Database Handler
-
-User embeddings are stored and retrieved efficiently:
-
-```python
-def add_user(self, username, embedding):
-    """
-    Add a new user with their face embedding to the database.
-    
-    Args:
-        username: Unique identifier for the user
-        embedding: 512-dimensional face embedding
-        
-    Returns:
-        Boolean indicating success
-    """
-    if self.user_exists(username):
-        return False
-    
-    # Prepare data for insertion
-    user_data = [username] + list(embedding)
-    
-    # Add to database
-    with open(self.db_path, 'a', newline='') as f:
-        writer = csv.writer(f)
-        writer.writerow(user_data)
-    
-    return True
-```
-
 ## Docker Deployment
 
 ### Raspberry Pi Deployment
@@ -295,6 +112,7 @@ docker exec -it face_recognizer_container_face_recognizer_1 bash
 
 ## Project Structure
 
+
 ## Root Files
 - [__init__.py](__init__.py): Python package initialization file
 - [add_user.py](add_user.py): Script to add new users to the face recognition database
@@ -318,22 +136,261 @@ docker exec -it face_recognizer_container_face_recognizer_1 bash
 - [Verify](Verify/): Verification logic for comparing face embeddings
 - [drowsiness](drowsiness/): Likely contains drowsiness detection algorithms
 
-## Additional Components
-- __pycache__: Contains compiled Python bytecode
-- .vscode: Visual Studio Code configuration settings
-- .gitignore: Specifies files to be ignored by Git
-
-The system uses OpenCV's Haar cascade classifier for face detection and a FaceNet model that generates 512-dimensional embeddings for face recognition. It's deployed as two Docker containers: one for face recognition and one for the database service.
 
 ## Model Information
 
-The system uses a cascade classifier for face detection, located in faces.xml. For face recognition, it employs a TFLite model to generate 512-dimensional face embeddings.
+The system uses OpenCV's Haar cascade classifier for face detection and a FaceNet model that generates 512-dimensional embeddings for face recognition. It's deployed as two Docker containers: one for face recognition and one for the database service.
 
 ## Database Structure
 
 User embeddings are stored in a CSV format with 512 embedding values plus the username. The database handling is managed by the `EmbeddingCSVHandler` class.
 
 SQLlite database 
+
+---
+## DVC Tutorial for Managing TFLite Models
+
+### What is DVC?
+
+[DVC (Data Version Control)](https://dvc.org/) is an open-source version control system for machine learning projects. It helps track changes to large files like models and datasets without storing them directly in Git.
+
+### Setting Up DVC for .tflite Models
+
+1. Install DVC:
+   ```bash
+   pip install dvc
+   pip install dvc-gdrive
+   ```
+
+2. Initialize DVC in your repository:
+   ```bash
+   dvc init
+   git add .dvc .dvcignore
+   git commit -m "Initialize DVC"
+   ```
+
+### Configuring Google Drive Remote Storage
+
+1. **Enable Google Drive API** (required to fix the 403 error):
+   - Visit the [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project or select an existing one
+   - Go to "APIs & Services" > "Library"
+   - Search for "Google Drive API" and enable it
+   - **Wait a few minutes** for the changes to take effect
+
+2. Set up authentication:
+   
+   **STEP 1: Using OAuth (Interactive)**
+   ```bash
+   dvc remote add -d myremote gdrive://your-folder-id
+   ```
+
+   **STEP 2: Using Service Account (Non-interactive, recommended for automation)**
+   - Create a service account in Google Cloud Console
+   - Go to "IAM & Admin" > "Service Accounts" > "Create Service Account"
+   - Provide a name and grant necessary permissions
+   - Create a key (JSON format) and download it
+
+   **STEP 3: Configure DVC to use the service account:**
+   ```bash
+   dvc remote modify myremote gdrive_use_service_account true
+
+   dvc remote modify myremote gdrive_service_account_json_file_path path/to/credentials.json
+   ```
+
+3. Add additional configuration if needed:
+   ```bash
+   # To bypass confirmation prompts for downloading potentially malicious files
+   dvc remote modify myremote gdrive_acknowledge_abuse true
+   
+   # Commit your DVC configuration
+   git add .dvc/config
+   git commit -m "Configure DVC remote storage"
+   ```
+
+### Tracking TFLite Models with DVC
+
+1. Add your .tflite model to DVC:
+   ```bash
+   dvc add Model/path/to/your/model.tflite
+   ```
+
+2. Stop Git from tracking the model file:
+   ```bash
+   git rm -r --cached 'Model/path/to/your/model.tflite'
+   ```
+
+3. Commit the DVC file to Git:
+   ```bash
+   git add Model/path/to/your/model.tflite.dvc
+   git commit -m "Add model with DVC tracking"
+   ```
+
+4. Push the model to remote storage:
+   ```bash
+   dvc push
+   ```
+
+### Troubleshooting DVC with Google Drive
+
+1. **Error 403: Google Drive API not enabled**
+   - Follow the link in the error message to enable the Google Drive API
+   - Wait a few minutes for the change to take effect
+   - Try again with `dvc push`
+
+2. **Authentication issues with service account**
+   - Ensure the service account has access to the Google Drive folder
+   - Share the folder with the service account email address
+   - Make sure the JSON key file path is correct
+
+3. **Permission issues**
+   - Verify the folder ID is correct
+   - Ensure your account or service account has write access to the folder
+   - Try creating a new folder specifically for DVC storage
+
+4. **Alternative approach: Use a different remote**
+   If Google Drive continues to cause issues, consider alternatives:
+   ```bash
+   # Local remote
+   dvc remote add -d localremote /path/to/local/storage
+   
+   # AWS S3
+   pip install dvc[s3]
+   dvc remote add -d s3remote s3://bucket/path
+   
+   # Azure Blob Storage
+   pip install dvc[azure]
+   dvc remote add -d azremote azure://container/path
+   ```
+
+### Working with Model Versions
+
+1. Update a model:
+   ```bash
+   # Replace the model file with a new version
+   cp /path/to/new/model.tflite models/face_recognition.tflite
+   
+   # Track the changes
+   dvc add models/face_recognition.tflite
+   git add models/face_recognition.tflite.dvc
+   git commit -m "Update face recognition model"
+   dvc push
+   ```
+
+2. Switch between model versions:
+   ```bash
+   # Checkout a specific Git commit
+   git checkout <commit-hash>
+   
+   # Pull the corresponding model version
+   dvc pull
+   ```
+
+3. Create a model tag:
+   ```bash
+   git tag -a model-v1.0 -m "Model version 1.0"
+   git push origin model-v1.0
+   ```
+
+### Best Practices
+
+1. Always run `dvc push` after adding or updating models
+2. Use meaningful commit messages for model changes
+3. Consider tagging important model versions
+4. Add model metrics to track performance changes
+
+### Using DVC in CI/CD
+
+For automated workflows, use these commands in your CI scripts:
+
+```bash
+# Pull the latest models
+dvc pull
+
+# Run your tests/deployment
+python your_script.py
+```
+
+For more information, visit the [DVC documentation](https://dvc.org/doc).
+
+## CI/CD with GitHub Actions
+
+This project uses GitHub Actions to automatically build and push Docker images for multiple architectures (x86_64 and ARM/Raspberry Pi) to Docker Hub.
+
+### Workflow Overview
+
+The GitHub Actions workflow:
+- Builds Docker images for both x86_64 (AMD64) and ARM architectures (Raspberry Pi 4)
+- Tags the images with version numbers and architecture identifiers
+- Pushes the images to a private Docker Hub repository
+- Creates multi-architecture manifests for easy deployment
+
+### Setup Instructions
+
+To set up the CI/CD pipeline:
+
+1. **Create Docker Hub Repository**:
+   - Create a private repository on Docker Hub for your images
+
+2. **Configure GitHub Secrets**:
+   In your GitHub repository, go to Settings > Secrets and add:
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username
+   - `DOCKERHUB_TOKEN`: Your Docker Hub access token (create in Docker Hub account settings)
+
+3. **Trigger Workflow**:
+   - Automatically triggered on:
+     - Pushes to the main branch
+     - Creating version tags (e.g., v1.0.0)
+   - Can be manually triggered from the Actions tab
+
+### Image Tagging Strategy
+
+The workflow creates several tags:
+- `latest-amd64`: Latest x86_64 build
+- `latest-arm`: Latest ARM build (Raspberry Pi)
+- `v1.0.0-amd64`: Version-specific x86_64 build
+- `v1.0.0-arm`: Version-specific ARM build
+- `latest`: Multi-architecture image
+- `v1.0.0`: Version-specific multi-architecture image
+
+### Using the Built Images
+
+To use the appropriate image for your architecture:
+
+For x86_64 systems:
+```bash
+docker pull yourusername/face_recognizer:latest-amd64
+# or specific version
+docker pull yourusername/face_recognizer:v1.0.0-amd64
+```
+
+For Raspberry Pi:
+```bash
+docker pull yourusername/face_recognizer:latest-arm
+# or specific version
+docker pull yourusername/face_recognizer:v1.0.0-arm
+```
+
+Using multi-architecture image (automatically selects correct architecture):
+```bash
+docker pull yourusername/face_recognizer:latest
+```
+
+### Creating a New Release
+
+To create a new release and trigger the workflow:
+
+1. Create and push a new tag:
+   ```bash
+   git tag -a v1.0.0 -m "Release v1.0.0"
+   git push origin v1.0.0
+   ```
+
+2. GitHub Actions will automatically build and tag the Docker images with this version
+
+### Workflow File
+
+The workflow is defined in `.github/workflows/docker-build.yml`. You can view and modify it to customize the build process.
 
 ## License
 

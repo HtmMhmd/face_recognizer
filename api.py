@@ -34,20 +34,35 @@ def flask_stream():
 @app.route("/")
 def index():
     global camera_thread
-    camera_thread.start()
+    # Check if the thread exists and is not already running
+    if not hasattr(camera_thread, 'is_alive') or not camera_thread.is_alive():
+        logging.debug("Starting camera thread")
+        camera_thread.start()
+    else:
+        logging.debug("Camera thread already running")
+    
     logging.debug("Index page requested")
     return render_template("index.html")
 
 @app.route("/video_feed")
 def video_feed():
+    global camera_thread
+    # Ensure camera thread is running when accessing video feed directly
+    if not hasattr(camera_thread, 'is_alive') or not camera_thread.is_alive():
+        logging.debug("Starting camera thread from video_feed endpoint")
+        camera_thread.start()
+    
     logging.debug("Video feed requested")
     return Response(flask_stream(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 @app.route("/verify_results")
 def verify_results():
-    global verification_results
-    # global camera_thread
-    # camera_thread.start()
+    global verification_results, camera_thread
+    # Ensure camera thread is running when accessing verification results directly
+    if not hasattr(camera_thread, 'is_alive') or not camera_thread.is_alive():
+        logging.debug("Starting camera thread from verify_results endpoint")
+        camera_thread.start()
+    
     with lock:
         results = verification_results.copy()
     logging.debug(f"Verification results: {results}")
@@ -116,10 +131,10 @@ if __name__ == "__main__":
     image_processor = ImageProcessor(model_architecture='mediapipe', verbose=True)
     drowsiness_detector = DrowsinessDetector()  # Initialize DrowsinessDetector
 
+    # Initialize but don't start the camera thread yet - it will start when routes are accessed
     global camera_thread
-    # Start the camera feed processing in a separate thread
-    camera_thread = threading.Thread(target=process_camera_feed, args=(image_processor, drowsiness_detector))
-    # camera_thread.start()
+    camera_thread = threading.Thread(target=process_camera_feed, args=(image_processor, drowsiness_detector), daemon=True)
+    logging.debug("Camera thread initialized, will start when routes are accessed")
 
     # Start the Flask app
     app.run(host='0.0.0.0', port=9000, debug=False, use_reloader=True)

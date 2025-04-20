@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#pycache files
+__pycache__/
+**/__pycache__/
+*/__pycache__/
+*/**/__pycache__/
+
 # C extensions
 *.so
 
@@ -128,10 +134,17 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Vscode settings
+.vscode/
 
 gallery_faces/
 embedding_model.py
+
+# Model files
 Model/FaceNet/facenet512_weights.h5
 Model/Detection/YoloDetector/yolov8n-face(2).pt
 Model/Detection/YoloV8OnnxRuntime/yolov8n-face.onnx
-.qodo
+
+Model/YoloDetection/YoloDetector/model.pt
+Model/YoloDetection/YoloV8OnnxRuntime/model.onnx
+Model/FaceNet/facenet.tflite

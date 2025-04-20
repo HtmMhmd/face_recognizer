@@ -88,6 +88,8 @@ class ImageProcessor:
                         'user_name': user_name,
                         'verification_result': verification_result
                     })
+                    if self.verbose:
+                        print(f"Face verified as user: {user_name}")
         return results
 
     def align_faces(self, image):

@@ -1,16 +1,15 @@
 version: '3.8'
 services:
   face_recognizer:
-    image: htmmhmd/face_recognizer:latest
-    build: 
-      context: .
-      dockerfile: Dockerfile
+    image:  htmmhmd/face_recognition:2.3.9
+    # build: 
+    #   context: .
+    #   dockerfile: Dockerfile
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
       - DB_API_URL=http://db_service:5000
     volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ./:/app:ro
       - face_db_data:/data:rw
     devices:
@@ -29,17 +28,17 @@ services:
     command: ["python", "api.py"]
 
   db_service:
-    image: htmmhmd/face_recognizer-db_service:latest
-    build: 
-      context: .
-      dockerfile: Dockerfile.db
+    image: htmmhmd/face_recognition_db:2.3.9
+    # build: 
+    #   context: .
+    #   dockerfile: Dockerfile.db
     volumes:
       - face_db_data:/data:rw
-    command: ["python", "database/db_api.py"]
     ports:
       - "5000:5000"
     networks:
       - face_net
+    command: ["python", "database/db_api.py"]
 
 networks:
   face_net:
