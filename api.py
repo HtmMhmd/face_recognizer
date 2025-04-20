@@ -42,7 +42,9 @@ def index():
         logging.debug("Camera thread already running")
     
     logging.debug("Index page requested")
-    return render_template("index.html")
+    return Response(flask_stream(), mimetype="multipart/x-mixed-replace; boundary=frame")
+
+    # return render_template("index.html")
 
 @app.route("/video_feed")
 def video_feed():
