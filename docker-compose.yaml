@@ -22,10 +22,9 @@ services:
     networks:
       - face_net
     ports:
-      - "8000:8000"  # If needed for your application
       - "9000:9000"
 
-    command: ["python", "run_model.py", "-c 0", "--detector", "mediapipe", "-v", "--enable-drowsiness", "--output", "results.json"]
+    command: ["python", "main.py", "-roc", "-ed", "-dt mediapipe"]
 
   db_service:
     image: htmmhmd/face_recognition_db:2.3.9
