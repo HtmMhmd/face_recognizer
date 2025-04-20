@@ -25,7 +25,7 @@ services:
       - "8000:8000"  # If needed for your application
       - "9000:9000"
 
-    command: ["python", "api.py"]
+    command: ["python", "run_model.py --detector mediapipe -v --enable-drowsiness --output results.json"]
 
   db_service:
     image: htmmhmd/face_recognition_db:2.3.9
