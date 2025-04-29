@@ -53,7 +53,10 @@ def preprocess_image(img) -> np.ndarray:
     image = img.copy()
     if isinstance(image, np.ndarray):
         image = image.astype(np.uint8)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        # Simple channel reordering using NumPy 
+        if image is not None and image.size > 0 and len(image.shape) == 3 and image.shape[2] >= 3:
+            image = image[:, :, ::-1]  # Reverse channels (BGR to RGB)
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     else:
         raise ValueError("img1 must be a valid file path or a numpy array")
     

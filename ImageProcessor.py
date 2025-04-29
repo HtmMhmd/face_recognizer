@@ -36,11 +36,20 @@ class ImageProcessor:
         detection_faces = self.detector.detect(image)
         
         embeddings = []
-        for cropped_face in detection_faces.cropped_faces:
-            embedding = self.facenet.forward(preprocess_image(cropped_face))
-            embeddings.append(embedding)
+        for i, cropped_face in enumerate(detection_faces.cropped_faces):
+            try:
+                if cropped_face is None or cropped_face.size == 0:
+                    print(f"Warning: Invalid cropped face at index {i}")
+                    continue
+                    
+                embedding = self.facenet.forward(preprocess_image(cropped_face))
+                embeddings.append(embedding)
+            except Exception as e:
+                print(f"Error processing face {i}: {str(e)}")
+                # Skip this face and continue with others
+                continue
+                
         self.detection_embedding.assign(detection_faces, embeddings)
-
         return self.detection_embedding
 
     def detect_landmarks(self, image):
