@@ -24,7 +24,7 @@ services:
     ports:
       - "9000:9000"
 
-    # command: ["python", "main.py", "-roc","-ch", "-ed"]
+    command: ["python", "main.py", "-roc", "-ed"]
 
   db_service:
     image: htmmhmd/face_recognition_db:2.3.9
