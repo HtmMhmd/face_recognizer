@@ -40,18 +40,6 @@ COPY --from=builder /opt/venv /opt/venv
 # Make sure we use the virtualenv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# # Copy only the necessary application files
-# COPY --from=builder /app/api.py /app/
-# COPY --from=builder /app/ImageProcessor.py /app/
-# COPY --from=builder /app/templates/ /app/templates/
-# COPY --from=builder /app/drowsiness/ /app/drowsiness/
-# COPY --from=builder /app/Model/ /app/Model/
-# COPY --from=builder /app/Align/ /app/Align/
-# COPY --from=builder /app/Landmark/ /app/Landmark/
-# COPY --from=builder /app/Verify/ /app/Verify/
-# COPY --from=builder /app/UsersDatabaseHandeler/ /app/UsersDatabaseHandeler/
-# COPY --from=builder /app/ImageUtilis/ /app/ImageUtilis/
-# COPY --from=builder /app/CameraUtilis/ /app/CameraUtilis/
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
