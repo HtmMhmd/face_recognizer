@@ -83,33 +83,33 @@ def process_camera_handler(image_processor, drowsiness_detector=None, show_gui=F
                 embeddings = image_processor.process_image(frame)
                 if embeddings is None or len(embeddings.embeddings) == 0:
                     print("No faces detected")
-                    continue
-
-                for item_index in range(len(embeddings.embeddings)):
-                    bbox = embeddings.detection_faces.boxes[item_index]
-                    ff = frame.copy()
-
-                # Run face detection on the frame
-                image_with_detections = image_processor.draw_detections(ff)
-
-                # Run landmark detection on the frame
-                landmarks = image_processor.detect_landmarks(ff)
-                image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
-
-                if image_with_detections is None:
-                    print("Face detection failed: No faces detected!")
+                    image_with_landmarks = frame
                 else:
-                    print("Face detection successful!")
+                    for item_index in range(len(embeddings.embeddings)):
+                        bbox = embeddings.detection_faces.boxes[item_index]
+                        ff = frame.copy()
 
-                # Process drowsiness detection if enabled
-                if drowsiness_detector:
-                    image_with_landmarks = drowsiness_detector.process_frame(image_with_landmarks)
+                    # Run face detection on the frame
+                    image_with_detections = image_processor.draw_detections(ff)
+
+                    # Run landmark detection on the frame
+                    landmarks = image_processor.detect_landmarks(ff)
+                    image_with_landmarks = image_processor.draw_landmarks(image_with_detections)
+
+                    verify_results = image_processor.verify_faces()
+                    
+                    image_username = image_processor.draw_user_names(image_with_landmarks, verify_results)
+
+                    eye_mouth = image_processor.get_eye_mouth_keypoints()
+
+                    # Process drowsiness detection if enabled
+                    if drowsiness_detector:
+                        image_with_landmarks = drowsiness_detector.process_frame(image_username, eye_mouth)
 
                 # Only show GUI if explicitly enabled
                 if show_gui:
                     cv2.imshow("Detection with Landmarks", image_with_landmarks)
 
-                ff = None
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break
     finally:
