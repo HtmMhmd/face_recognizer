@@ -9,6 +9,8 @@ services:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
       - DB_API_URL=http://db_service:5000
+      - AV_LOG_LEVEL=0
+      - OPENCV_FFMPEG_LOGLEVEL=0
     volumes:
       - ./:/app:ro
       - face_db_data:/data:rw
@@ -24,7 +26,7 @@ services:
     ports:
       - "9000:9000"
 
-    # command: ["python", "main.py", "-roc","-ch", "-ed"]
+    command: ["python", "main.py", "-roc","-ch" ,"-ed"]
 
   db_service:
     image: htmmhmd/face_recognition_db:2.3.9
