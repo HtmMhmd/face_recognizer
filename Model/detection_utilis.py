@@ -22,6 +22,7 @@ def get_cropped_faces(image, boxes):
             x_min, y_min, x_max, y_max  = box
             cropped_face = image[y_min:y_max, x_min:x_max]
             cropped_faces.append(cropped_face)
+        cropped_faces = cropped_faces[0] if len(cropped_faces) == 1 else print("ERROR IN GET_CROPPED_FACES : MORE THAN 1 FACE DETECTED")
     return np.array(cropped_faces, dtype='float32')
 
 def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3):
