@@ -47,7 +47,6 @@ class MediapipeFaceDetector(FaceDetector):
                        int(bboxC.width * iw), int(bboxC.height * ih)
                 
                 box=[bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3]]
-                print(f"Detection {get_cropped_faces(image, [box]).shape}")
                 self.detection_faces.add(
                     box= box,
                     score=detection.score[0],

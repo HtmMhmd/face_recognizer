@@ -22,6 +22,8 @@ class Detector:
             self.detector = Yolov8Detector(detection_faces = self.detection_faces, verbose=verbose)
         elif detector_type == 'mediapipe':
             self.detector = MediapipeFaceDetector(min_detection_conf, verbose=verbose, detection_faces = self.detection_faces)
+        elif detector_type == 'landmark':
+            pass
         else:
             raise ValueError("Invalid detector type. Choose from 'yolov8_onnx', 'yolov8', or 'mediapipe'.")
 

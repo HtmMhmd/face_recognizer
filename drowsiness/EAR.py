@@ -4,90 +4,194 @@ import subprocess
 import os
 import threading
 import time
+from collections import deque
+from scipy.spatial import distance
 
 class DrowsinessDetector:
-    def __init__(self):
-        self.count = 0
-        self.alarm_threshold = 30  # frames before alarm triggers
-        self.alarm_path = "drowsiness/alarm2.mp3"
+    def __init__(self, ear_threshold=0.25, mar_threshold=0.5, 
+                 drowsy_time_threshold=2.0, ear_frames=20, 
+                 text_pos=(10, 30), verbose=False):
+        """
+        Initialize the drowsiness detector with thresholds and tracking variables.
+        
+        Args:
+            ear_threshold: Eye Aspect Ratio threshold below which eyes are considered closed
+            mar_threshold: Mouth Aspect Ratio threshold above which mouth is considered open
+            drowsy_time_threshold: Time threshold (in seconds) for considering drowsiness
+            ear_frames: Number of frames to keep in history for EAR
+            text_pos: Position to display status text on frame
+            verbose: Whether to print detailed information
+        """
+        # Thresholds
+        self.EAR_THRESHOLD = ear_threshold
+        self.MAR_THRESHOLD = mar_threshold
+        self.DROWSY_TIME_THRESHOLD = drowsy_time_threshold
+        
+        # Tracking variables
+        self.eye_closed_start_time = None
+        self.current_ear = 1.0  # Default to open eyes
+        self.current_mar = 0.0  # Default to closed mouth
+        
+        # History tracking
+        self.ear_history = deque(maxlen=ear_frames)
+        self.drowsy_status = False
+        self.yawning_status = False
+        
+        # Display settings
+        self.TEXT_POS = text_pos
+        self.verbose = verbose
 
-        # Check if alarm file exists
-        if os.path.exists(self.alarm_path):
-            print("Alarm file loaded successfully!")
-        else:
-            print(" Error: Alarm file not found!")
-
-    def calc_ear(self, eye):
-        A = np.linalg.norm(np.array(eye[2]) - np.array(eye[5]))
-        B = np.linalg.norm(np.array(eye[3]) - np.array(eye[4]))
-        C = np.linalg.norm(np.array(eye[1]) - np.array(eye[0]))
-        ear = (A + B) / (2.0 * C)
+    def calculate_ear(self, eye_points):
+        """Calculate the Eye Aspect Ratio (EAR) for given eye points."""
+        if not eye_points or len(eye_points) < 6:
+            return 1.0  # Default to open eyes if points missing
+            
+        # Calculate vertical distances
+        v1 = distance.euclidean(eye_points[1], eye_points[5])
+        v2 = distance.euclidean(eye_points[2], eye_points[4])
+        
+        # Calculate horizontal distance
+        h = distance.euclidean(eye_points[0], eye_points[3])
+        
+        # Calculate EAR
+        ear = (v1 + v2) / (2.0 * h) if h > 0 else 1.0
+        
         return ear
 
-    def play_alarm(self):
-        """Plays alarm sound inside Docker using PulseAudio"""
-        try:
-            # subprocess.Popen(["paplay", self.alarm_path])
-            # print(" Alarm triggered! Playing sound...")
-            pass
-        except Exception as e:
-            print(f" Error playing alarm: {e}")
+    def calculate_mar(self, mouth_points):
+        """Calculate the Mouth Aspect Ratio (MAR) for given mouth points."""
+        if not mouth_points or len(mouth_points) < 6:
+            return 0.0  # Default to closed mouth if points missing
+            
+        # Calculate vertical distance
+        v = distance.euclidean(mouth_points[2], mouth_points[5])
+        
+        # Calculate horizontal distances
+        h1 = distance.euclidean(mouth_points[0], mouth_points[3])
+        h2 = distance.euclidean(mouth_points[1], mouth_points[4])
+        
+        # Calculate MAR
+        mar = v / ((h1 + h2) / 2.0) if h1 + h2 > 0 else 0.0
+        
+        return mar
 
-    def process_frame(self, image, eye_keypoints):
-        if "left_eye" not in eye_keypoints or "right_eye" not in eye_keypoints:
-            print("Error: Eye keypoints missing!")
-            return image  # Return original image
-
-        left_eye = eye_keypoints["left_eye"]
-        right_eye = eye_keypoints["right_eye"]
-
-        if not left_eye or not right_eye:
-            print("No eye landmarks detected, skipping drowsiness detection.")
-            return image
-
-        left_ear = self.calc_ear(left_eye)
-        right_ear = self.calc_ear(right_eye)
-        avg_ear = (left_ear + right_ear) / 2.0
-
-        # print(f"📉 EAR: {avg_ear}")
-
-        # Draw eye landmarks on the image
-        for (x, y) in left_eye + right_eye:
-            cv2.circle(image, (x, y), 2, (0, 255, 0), -1)
-
-        if avg_ear < 0.25:
-            self.count += 1
+    def process_frame(self, frame, eye_mouth_keypoints):
+        """
+        Process a frame for drowsiness detection.
+        
+        Args:
+            frame: The video frame to process
+            eye_mouth_keypoints: Dictionary with keys 'left_eye', 'right_eye', 'mouth' 
+                                 containing lists of (x,y) coordinate tuples
+                                 
+        Returns:
+            The frame with drowsiness indicators drawn
+        """
+        # Make a copy of the frame to avoid modifying the original
+        result_frame = frame.copy()
+        
+        # Check if we have valid keypoints
+        if not eye_mouth_keypoints:
+            if self.verbose:
+                print("No valid keypoints provided")
+            return result_frame
+            
+        left_eye = eye_mouth_keypoints.get('left_eye', [])
+        right_eye = eye_mouth_keypoints.get('right_eye', [])
+        mouth = eye_mouth_keypoints.get('mouth', [])
+        
+        # Calculate EAR
+        left_ear = self.calculate_ear(left_eye)
+        right_ear = self.calculate_ear(right_eye)
+        
+        # Average the EAR of both eyes
+        self.current_ear = (left_ear + right_ear) / 2.0
+        self.ear_history.append(self.current_ear)
+        
+        # Calculate MAR
+        self.current_mar = self.calculate_mar(mouth)
+        
+        # Check for drowsiness
+        if self.current_ear < self.EAR_THRESHOLD:
+            # Eyes are closed
+            if self.eye_closed_start_time is None:
+                self.eye_closed_start_time = time.time()
+            
+            # Check if eyes have been closed for long enough
+            if self.eye_closed_start_time and time.time() - self.eye_closed_start_time >= self.DROWSY_TIME_THRESHOLD:
+                self.drowsy_status = True
+                cv2.putText(result_frame, "DROWSINESS ALERT!", self.TEXT_POS, 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            else:
+                cv2.putText(result_frame, "Eyes Closed", self.TEXT_POS, 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
         else:
-            self.count = 0  # Reset counter if eyes are open
+            # Eyes are open
+            self.eye_closed_start_time = None
+            self.drowsy_status = False
+            cv2.putText(result_frame, "Eyes Open", self.TEXT_POS, 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        
+        # Check for yawning
+        if self.current_mar > self.MAR_THRESHOLD:
+            self.yawning_status = True
+            cv2.putText(result_frame, f"Yawning (MAR: {self.current_mar:.2f})", 
+                       (self.TEXT_POS[0], self.TEXT_POS[1] + 30), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        else:
+            self.yawning_status = False
+            cv2.putText(result_frame, f"MAR: {self.current_mar:.2f}", 
+                       (self.TEXT_POS[0], self.TEXT_POS[1] + 30), 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        
+        # Display the EAR value
+        cv2.putText(result_frame, f"EAR: {self.current_ear:.2f}", 
+                   (self.TEXT_POS[0], self.TEXT_POS[1] + 60), 
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+                   
+        return result_frame
 
-        if self.count >= self.alarm_threshold:
-            # print("Drowsiness Detected! Playing Alarm!")
-            cv2.putText(image, "DROWSINESS ALERT!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 3)
-            self.play_alarm()  # Trigger alarm sound
+    def is_drowsy(self) -> bool:
+        """
+        Return True if the person is detected as drowsy, False otherwise.
+        Uses both current EAR and historical EAR values to determine drowsiness.
+        """
+        # Check if current EAR indicates drowsiness
+        return self.drowsy_status
 
-        return image
-
-
-
-    def run(self, image):
-        # while self.cap.isOpened():
-        #     success, image = self.cap.read()
-        #     if not success:
-        #         break
-
-        # image = cv2.flip(image, 1)
-        processed_image = self.process_frame(image)
-        #     cv2.imshow("Drowsiness Detection", processed_image)
-
-        #     if cv2.waitKey(1) & 0xFF == ord('q'):
-        #         break
-
-        # self.cap.release()
-        # cv2.destroyAllWindows()
-        # pygame.mixer.quit()
+    def is_yawning(self) -> bool:
+        """
+        Return True if the person is detected as yawning, False otherwise.
+        Uses the mouth aspect ratio to determine if person is yawning.
+        """
+        # Return True if MAR exceeds threshold
+        return self.yawning_status
+        
+    def get_current_ear(self):
+        """Get the current Eye Aspect Ratio."""
+        return self.current_ear
+        
+    def get_current_mar(self):
+        """Get the current Mouth Aspect Ratio."""
+        return self.current_mar
 
 if __name__ == "__main__":
     # Create a single camera instance
     camera = cv2.VideoCapture(0)
-    detector = DrowsinessDetector(camera)
-    detector.run()
+    detector = DrowsinessDetector()
+    while camera.isOpened():
+        success, frame = camera.read()
+        if not success:
+            break
+        # Simulate keypoints for testing
+        keypoints = {
+            "left_eye": [(30, 40), (35, 45), (40, 50), (45, 55), (50, 60), (55, 65)],
+            "right_eye": [(60, 70), (65, 75), (70, 80), (75, 85), (80, 90), (85, 95)],
+            "mouth": [(100, 110), (105, 115), (110, 120), (115, 125), (120, 130), (125, 135)]
+        }
+        processed_frame = detector.process_frame(frame, keypoints)
+        cv2.imshow("Drowsiness and Yawning Detection", processed_frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    camera.release()
+    cv2.destroyAllWindows()

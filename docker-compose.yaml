@@ -19,14 +19,31 @@ services:
     ipc: host
     stdin_open: true
     tty: true
+    restart: unless-stopped
     depends_on:
       - db_service
     networks:
       - face_net
     ports:
       - "9000:9000"
+    command: ["python", "main.py", "-roc"  ,"-ed"]
 
-    command: ["python", "main.py", "-roc" , "-ch" ,"-ed"]
+  drowsiness_detector:
+    image:  htmmhmd/face_recognition:2.3.9
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      - AV_LOG_LEVEL=0
+      - OPENCV_FFMPEG_LOGLEVEL=0
+    volumes:
+      - ./:/app:ro
+    devices:
+      - /dev/video0:/dev/video0
+    ipc: host
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    command: ["python", "run_drawsy.py", "-roc", "-v"]
 
   db_service:
     image: htmmhmd/face_recognition_db:2.3.9
@@ -37,6 +54,7 @@ services:
       - face_db_data:/data:rw
     ports:
       - "5000:5000"
+    restart: unless-stopped
     networks:
       - face_net
     command: ["python", "database/db_api.py"]

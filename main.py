@@ -9,10 +9,6 @@ from drowsiness.EAR import DrowsinessDetector  # Import DrowsinessDetector
 output_frame = None
 lock = threading.Lock()
 
-def play_alarm():
-    import os
-    os.system("paplay drowsiness/alarm2.mp3")
-
 # Function to process camera feed using cv2.VideoCapture
 def process_camera_feed(image_processor, drowsiness_detector=None, show_gui=False):
     global output_frame

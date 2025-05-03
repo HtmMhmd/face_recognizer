@@ -5,3 +5,4 @@ mediapipe==0.10.18
 requests==2.26.0
 opencv-contrib-python
 flask
+zmq
