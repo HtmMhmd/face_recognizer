@@ -28,13 +28,13 @@ def process_camera_feed(detector, drowsiness_detector=None, show_gui=False):
             # Resize the frame
             frame = cv2.resize(frame, (480, 360))
             
-            # Process the frame with detection
-            detection_result = detector.detect(frame)
-            frame_with_detections = detector.draw_detections(frame)
+            # # Process the frame with detection
+            # detection_result = detector.detect(frame)
+            # frame_with_detections = detector.draw_detections(frame)
             
             # Run landmark detection on the frame
             landmarks = detector.landmark(frame)
-            frame_with_landmarks = detector.draw_landmarks(frame_with_detections)
+            frame_with_landmarks = detector.draw_landmarks(frame)
             
             # Get eye and mouth keypoints for drowsiness detection
             eye_mouth = detector.get_eye_mouth_keypoints()
@@ -75,13 +75,13 @@ def process_camera_handler(detector, drowsiness_detector=None, show_gui=False):
                 # Resize the frame
                 frame = cv2.resize(frame, (480, 360))
                 
-                # Process the frame with detection
-                detection_result = detector.detect(frame)
-                frame_with_detections = detector.draw_detections(frame)
+                # # Process the frame with detection
+                # detection_result = detector.detect(frame)
+                # frame_with_detections = detector.draw_detections(frame)
                 
                 # Run landmark detection on the frame
                 landmarks = detector.landmark(frame)
-                frame_with_landmarks = detector.draw_landmarks(frame_with_detections)
+                frame_with_landmarks = detector.draw_landmarks(frame)
                 
                 # Get eye and mouth keypoints for drowsiness detection
                 eye_mouth = detector.get_eye_mouth_keypoints()
@@ -186,7 +186,7 @@ if __name__ == "__main__":
                        help="Provide the path to your test image")
     parser.add_argument('-op', "--output_path", type=str, default=None, 
                        help="Provide the path to save the processed image")
-    parser.add_argument('-dt', "--detector_type", type=str, default='mediapipe', 
+    parser.add_argument('-dt', "--detector_type", type=str, default='landmark', 
                        help="Type of detector to use ('yolov8_onnx', 'yolov8', 'mediapipe')")
     parser.add_argument('-ed', "--enable_drowsiness", action='store_true', default=True, 
                        help="Enable drowsiness detection")

@@ -152,6 +152,10 @@ def main(run_on_camera=True, use_camera_handler=False, image_path=None, output_p
     drowsiness_detector = DrowsinessDetector() if enable_drowsiness else None
 
     if run_on_camera:
+        print("Starting DMS...")
+        print(f"Using {'CameraHandler' if use_camera_handler else 'OpenCV VideoCapture'}")
+        print(f"Detector type: {detector_type}")
+        print("Press 'q' to quit")
         if use_camera_handler:
             process_camera_handler(image_processor, drowsiness_detector, show_gui)
         else:

@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   face_recognizer:
-    image:  htmmhmd/face_recognition:2.3.9
+    image:  htmmhmd/face_recognition:2.3.9.1
     # build: 
     #   context: .
     #   dockerfile: Dockerfile
@@ -22,14 +22,15 @@ services:
     restart: unless-stopped
     depends_on:
       - db_service
+      - mjpg-streamer
     networks:
       - face_net
     ports:
       - "9000:9000"
-    command: ["python", "main.py", "-roc"  ,"-ed"]
+    command: ["python", "main.py", "-roc","-ch" , "-ed"]
 
   drowsiness_detector:
-    image:  htmmhmd/face_recognition:2.3.9
+    image:  htmmhmd/face_recognition:2.3.9.1
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -43,10 +44,14 @@ services:
     stdin_open: true
     tty: true
     restart: unless-stopped
-    command: ["python", "run_drawsy.py", "-roc", "-v"]
+    networks:
+      - face_net
+    depends_on:
+      - mjpg-streamer
+    command: ["python", "run_drawsy.py", "-roc","-ch","-ed"]
 
   db_service:
-    image: htmmhmd/face_recognition_db:2.3.9
+    image: htmmhmd/face_recognition_db:2.3.9.1
     # build: 
     #   context: .
     #   dockerfile: Dockerfile.db
@@ -58,6 +63,21 @@ services:
     networks:
       - face_net
     command: ["python", "database/db_api.py"]
+
+  mjpg-streamer:
+
+    image: htmmhmd/mjpg-streamer:latest
+    ports:
+      - "8080:8080"
+    devices:
+      - /dev/video0:/dev/video0
+    environment:
+      - CAMERA_DEVICE=/dev/video0
+      - STREAM_PORT=8080
+    restart: always
+    networks:
+      - face_net
+    privileged: true
 
 networks:
   face_net:
