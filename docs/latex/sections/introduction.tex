@@ -1,65 +1,63 @@
 \section{Background and Motivation}
+Face recognition technology has evolved significantly in recent years, becoming an integral part of various applications ranging from security systems to user authentication in consumer electronics. The rapid advancement in deep learning techniques, particularly convolutional neural networks (CNNs), has dramatically improved the accuracy and robustness of face recognition systems.
 
-Face recognition technology has advanced significantly in recent years, driven by improvements in deep learning techniques, increased computational power, and the growing demand for biometric authentication solutions. These systems have found applications in security, attendance tracking, user authentication, and various other domains where reliable identification is crucial.
-
-Despite the availability of commercial solutions, there remains a need for flexible, open-source implementations that can be adapted to specific requirements and deployment scenarios. This project aims to address this gap by providing a comprehensive face recognition system that balances accuracy, speed, and usability while remaining highly customizable.
+This project is motivated by the need for a flexible, modular, and configurable face recognition system that can be adapted to various use cases while maintaining high accuracy and real-time performance. Current face recognition solutions often come as black-box implementations with limited configurability, or as research prototypes that lack robustness for real-world deployment.
 
 \section{Problem Statement}
-
-Traditional authentication systems often rely on methods such as passwords, ID cards, or PINs, which can be forgotten, stolen, or shared, compromising security. Biometric systems, particularly face recognition, offer a more secure and convenient alternative as they are based on inherent physical characteristics that are difficult to forge or transfer.
-
-However, implementing an effective face recognition system presents several challenges:
+Implementing a complete face recognition system involves solving several interconnected challenges:
 \begin{itemize}
-    \item Achieving reliable face detection under varying lighting and environmental conditions
-    \item Generating consistent facial embeddings that can distinguish between individuals
-    \item Verifying identities with high accuracy while minimizing false positives and negatives
-    \item Processing images in real-time for practical applications
-    \item Adapting to different hardware capabilities and deployment scenarios
+    \item Accurate face detection in varying lighting conditions and poses
+    \item Extraction of discriminative facial embeddings
+    \item Efficient verification and matching against a database of known faces
+    \item Real-time performance on consumer hardware
+    \item Flexibility to adapt to different use cases and deployment scenarios
+    \item Maintainability and configurability without code modifications
 \end{itemize}
 
-\section{Objectives}
+This project addresses these challenges by developing a comprehensive face recognition pipeline with modular components that can be easily configured and extended.
 
-This project aims to develop a robust, real-time face recognition system with the following objectives:
+\section{Objectives}
+The primary objectives of this project are:
 
 \begin{enumerate}
-    \item Implement multiple face detection models to accommodate different accuracy/speed requirements
-    \item Integrate state-of-the-art face recognition using deep learning embeddings
-    \item Develop a flexible verification system with multiple distance metrics
-    \item Include face alignment techniques to improve recognition accuracy
-    \item Add drowsiness detection capabilities for security monitoring applications
-    \item Create a centralized configuration system for easy deployment and customization
-    \item Design a modular architecture that supports future extensions
-    \item Provide a user-friendly API and web interface for system interaction
-    \item Ensure real-time performance on standard hardware
+    \item Develop a modular face recognition system with interchangeable components
+    \item Implement multiple face detection methods and compare their performance
+    \item Create an efficient face recognition pipeline using state-of-the-art embedding techniques
+    \item Design a centralized configuration system for easy parameter tuning
+    \item Support multiple operational modes (camera feed, image processing, API)
+    \item Implement additional features such as face alignment and drowsiness detection
+    \item Provide a web interface for easy interaction with the system
+    \item Ensure the system is well-documented and maintainable
 \end{enumerate}
 
-\section{Scope}
-
-The scope of this project encompasses:
+\section{Contributions}
+This project makes several contributions to the field of face recognition:
 
 \begin{itemize}
-    \item Face detection using MediaPipe and YOLOv8 models
-    \item Face recognition using FaceNet embeddings
-    \item Multiple verification metrics including cosine similarity and Euclidean distance
-    \item Face alignment based on eye detection
-    \item Drowsiness detection using eye aspect ratio (EAR) and mouth aspect ratio (MAR)
-    \item User database management for storing and retrieving facial embeddings
-    \item Configuration framework for customizing system behavior
-    \item API and web interface for system interaction
-    \item Camera integration for real-time face recognition
+    \item A flexible architecture that supports multiple face detection models (MediaPipe, YOLOv8, YOLOv8-ONNX)
+    \item A comprehensive configuration system that centralizes all tunable parameters
+    \item Integration of face alignment techniques to improve recognition accuracy
+    \item Support for multiple verification metrics with configurable thresholds
+    \item A modular design that allows easy extension and customization
+    \item Implementation of additional features such as drowsiness detection
+    \item A web-based API interface for easy integration with other systems
 \end{itemize}
 
 \section{Document Structure}
-
 The remainder of this document is organized as follows:
 
-\begin{itemize}
-    \item Chapter 2 provides an overview of the system architecture and design principles.
-    \item Chapter 3 details the configuration system that provides flexibility and customization.
-    \item Chapters 4-8 describe the core components: face detection, recognition, verification, alignment, and drowsiness detection.
-    \item Chapter 9 explains the database implementation for managing user embeddings.
-    \item Chapter 10 covers camera integration and image processing techniques.
-    \item Chapter 11 discusses the API and web interface for system interaction.
-    \item Chapters 12-15 provide testing results, deployment considerations, future work, and conclusions.
-    \item The appendices contain detailed installation guides, configuration references, API documentation, and code architecture details.
-\end{itemize}
+Chapter 2 presents the overall system architecture, describing how the different components interact.
+
+Chapter 3 details the configuration system, explaining how it centralizes all settings and makes the system easily adaptable.
+
+Chapters 4-8 delve into the core components: face detection, recognition, verification, alignment, and drowsiness detection.
+
+Chapter 9 describes the database implementation for storing and retrieving face embeddings.
+
+Chapter 10 covers camera handling and image processing utilities.
+
+Chapter 11 explains the API and web interface implementation.
+
+Chapters 12-15 discuss testing, performance evaluation, deployment considerations, and potential future improvements.
+
+The appendices provide installation guides, configuration references, API documentation, and detailed code architecture.

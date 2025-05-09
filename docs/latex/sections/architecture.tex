@@ -1,152 +1,67 @@
-\section{Overview}
-
-The face recognition system follows a modular, layered architecture designed for flexibility, extensibility, and maintainability. This design allows components to be developed, tested, and replaced independently, while ensuring separation of concerns. The system is implemented in Python, leveraging popular libraries for computer vision and deep learning tasks.
+\section{System Overview}
+The face recognition system follows a modular architecture design pattern, separating concerns into distinct components that can work together seamlessly while allowing for independent development, testing, and replacement. Figure \ref{fig:architecture} illustrates the high-level architecture of the system.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{images/system_architecture.png}
-\caption{High-level system architecture showing core components and their interactions}
-\label{fig:system_architecture}
+\includegraphics[width=0.9\textwidth]{images/system_architecture.png}
+\caption{High-level system architecture showing the main components and their interactions}
+\label{fig:architecture}
 \end{figure}
 
-\section{Core Components}
-
-The system consists of the following core components:
-
-\subsection{Face Detection}
-
-The detection module provides a unified interface for multiple face detection algorithms:
+The system is composed of several key modules:
 
 \begin{itemize}
-    \item \textbf{MediaPipe Detector}: Uses Google's MediaPipe framework for efficient face detection and landmark extraction.
-    \item \textbf{YOLOv8 Detector}: Implements the state-of-the-art YOLOv8 object detection model optimized for face detection.
-    \item \textbf{ONNX Runtime Detector}: A high-performance version of YOLOv8 using ONNX Runtime for inference acceleration.
+    \item \textbf{Core Components:} Face detection, recognition, verification, alignment, and drowsiness detection modules
+    \item \textbf{Services:} Camera service, image processing service
+    \item \textbf{Database:} Storage and retrieval of facial embeddings
+    \item \textbf{API:} Web interface for interaction with the system
+    \item \textbf{Configuration:} Centralized settings management
+    \item \textbf{Utilities:} Shared helper functions for image processing and camera handling
 \end{itemize}
 
-Each detector produces standardized detection results, encapsulated in the \texttt{DetectionFaces} class, which includes bounding boxes, confidence scores, and facial landmarks.
+\section{Component Interactions}
+The system components interact in a pipeline fashion for processing images and video streams:
 
-\subsection{Face Recognition}
+\begin{enumerate}
+    \item The camera handler captures frames from a camera source
+    \item Frames are processed by the face detection module to locate faces
+    \item Detected faces are aligned using the alignment module
+    \item Facial landmarks are extracted for additional processing (e.g., drowsiness detection)
+    \item The face recognition module generates embeddings for each detected face
+    \item The verification module compares embeddings against the database
+    \item Results are displayed through the GUI or returned via the API
+\end{enumerate}
 
-The recognition module extracts facial embeddings using deep learning models:
+\section{Operational Modes}
+The system supports three primary operational modes:
+
+\subsection{Single Image Processing}
+In this mode, the system processes a single image file, detecting faces, generating embeddings, and comparing against the database. This mode is useful for testing and for processing static images.
+
+\subsection{Camera Feed Processing}
+This mode processes a live camera feed in real-time, continuously detecting and recognizing faces. It can display the processed feed with detection results and recognized user names. This mode is suitable for interactive applications like access control systems.
+
+\subsection{API Server Mode}
+The API mode exposes the system's capabilities through a web interface, allowing other applications to interact with the face recognition functionality. It provides endpoints for uploading images, retrieving detection results, and managing the user database.
+
+\section{Modularity and Extensibility}
+The system's modular design enables several key advantages:
 
 \begin{itemize}
-    \item \textbf{FaceNet TFLite Handler}: Implements a lightweight version of FaceNet using TensorFlow Lite for generating 512-dimensional facial embeddings.
+    \item \textbf{Interchangeable Components:} Different detection models (MediaPipe, YOLOv8, etc.) can be swapped without affecting other components
+    \item \textbf{Extensibility:} New models and algorithms can be integrated by implementing the defined interfaces
+    \item \textbf{Testability:} Components can be tested independently
+    \item \textbf{Maintainability:} Changes to one component don't require modifications to others
 \end{itemize}
 
-The recognition module normalizes facial images using alignment techniques before generating embeddings, which improves recognition accuracy under varying conditions.
+\section{Data Flow}
+Figure \ref{fig:dataflow} illustrates the flow of data through the system components during typical operation.
 
-\subsection{Face Verification}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{images/data_flow.png}
+\caption{Data flow diagram showing how information moves through the system}
+\label{fig:dataflow}
+\end{figure}
 
-The verification module compares facial embeddings to determine identity matches:
-
-\begin{itemize}
-    \item Multiple distance metrics (cosine similarity, Euclidean distance)
-    \item Customizable verification thresholds
-    \item User database integration for storing and retrieving reference embeddings
-\end{itemize}
-
-\subsection{Face Alignment}
-
-The alignment module normalizes facial orientation for improved recognition:
-
-\begin{itemize}
-    \item Eye detection using cascade classifiers
-    \item Affine transformations to normalize facial orientation
-\end{itemize}
-
-\subsection{Drowsiness Detection}
-
-The drowsiness detection module uses facial landmarks to monitor alertness:
-
-\begin{itemize}
-    \item Eye Aspect Ratio (EAR) calculation
-    \item Mouth Aspect Ratio (MAR) calculation
-    \item Temporal analysis to detect sustained drowsiness
-\end{itemize}
-
-\subsection{Camera Integration}
-
-The camera module provides a unified interface for video capture:
-
-\begin{itemize}
-    \item Support for local and network cameras
-    \item Multi-threading for non-blocking frame capture
-    \item Frame buffering and synchronization
-\end{itemize}
-
-\subsection{Database Management}
-
-The database module handles user enrollment and embedding storage:
-
-\begin{itemize}
-    \item CSV-based storage for simplicity and portability
-    \item API for embedding storage and retrieval
-    \item User management functions (add, delete, update)
-\end{itemize}
-
-\subsection{API and Web Interface}
-
-The API module enables programmatic interaction with the system:
-
-\begin{itemize}
-    \item RESTful API built with Flask
-    \item Web interface for visualization and interaction
-    \item Real-time video streaming
-\end{itemize}
-
-\section{Design Patterns}
-
-The system incorporates several design patterns to promote clean, maintainable code:
-
-\subsection{Facade Pattern}
-
-The system uses facade classes (e.g., \texttt{Detector}, \texttt{ImageProcessor}) that provide simplified interfaces to complex subsystems. This hides implementation details and makes high-level components easier to use.
-
-\subsection{Strategy Pattern}
-
-Different algorithms for the same task (e.g., multiple face detection models) are encapsulated as interchangeable strategies, allowing selection at runtime based on configuration settings.
-
-\subsection{Factory Pattern}
-
-Factory methods create specific implementation objects based on configuration, which decouples object creation from usage.
-
-\subsection{Observer Pattern}
-
-Components use event-based communication to notify each other of relevant events (e.g., a new face detection triggering recognition).
-
-\subsection{Dependency Injection}
-
-Dependencies are provided to components rather than created within them, promoting modularity and testability.
-
-\section{Configuration Management}
-
-The system uses a centralized configuration framework based on YAML files:
-
-\begin{itemize}
-    \item Hierarchical settings organization
-    \item Default values with override capabilities
-    \item Runtime configuration changes
-    \item Command-line argument integration
-\end{itemize}
-
-This provides flexibility while maintaining code-configuration separation.
-
-\section{Exception Handling}
-
-The system implements robust exception handling:
-
-\begin{itemize}
-    \item Graceful degradation when components fail
-    \item Detailed logging for troubleshooting
-    \item Recovery mechanisms for transient errors
-\end{itemize}
-
-\section{Concurrency Model}
-
-Real-time processing requires efficient concurrency:
-
-\begin{itemize}
-    \item Thread-based parallelism for I/O-bound operations
-    \item Producer-consumer pattern for camera frame processing
-    \item Synchronization mechanisms to prevent race conditions
-\end{itemize}
+The system's architecture emphasizes clean separation of concerns, making it easy to understand, maintain, and extend. Each component focuses on a specific task while communicating with other components through well-defined interfaces.

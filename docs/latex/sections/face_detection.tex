@@ -1,0 +1,192 @@
+\section{Face Detection Overview}
+Face detection is the critical first step in any face recognition pipeline. It involves locating and extracting facial regions from input images or video frames. The accuracy and performance of the face detection algorithm significantly impact the overall system effectiveness. This project implements multiple face detection approaches to provide flexibility and allow performance comparisons.
+
+\section{Detection Models}
+The system supports three state-of-the-art face detection models:
+
+\subsection{MediaPipe Face Detector}
+MediaPipe is a cross-platform framework for building multimodal machine learning pipelines. The MediaPipe Face Detection model is lightweight and optimized for real-time applications.
+
+\begin{lstlisting}[language=Python, caption=MediaPipe Detector Implementation]
+class MediaPipeDetector:
+    def __init__(self, min_detection_confidence=0.5, verbose=False):
+        self.min_detection_confidence = min_detection_confidence
+        self.verbose = verbose
+        
+        # Initialize MediaPipe face detection
+        mp_face_detection = mp.solutions.face_detection
+        self.face_detection = mp_face_detection.FaceDetection(
+            min_detection_confidence=self.min_detection_confidence
+        )
+        
+        # Initialize MediaPipe face mesh for landmarks
+        mp_face_mesh = mp.solutions.face_mesh
+        self.face_mesh = mp_face_mesh.FaceMesh(
+            static_image_mode=False,
+            max_num_faces=10,
+            min_detection_confidence=self.min_detection_confidence,
+            min_tracking_confidence=0.5
+        )
+\end{lstlisting}
+
+Key features of the MediaPipe implementation:
+\begin{itemize}
+    \item Lightweight and fast processing suitable for real-time applications
+    \item Provides both face detection and facial landmark extraction
+    \item Works well with frontal faces in varied lighting conditions
+    \item Lower computational requirements compared to YOLOv8
+\end{itemize}
+
+\subsection{YOLOv8 Face Detector}
+You Only Look Once (YOLO) is a state-of-the-art, real-time object detection system. YOLOv8 is the latest version with improved accuracy and speed. The implementation uses a YOLOv8 model specifically fine-tuned for face detection.
+
+\begin{lstlisting}[language=Python, caption=YOLOv8 Detector Implementation]
+class Yolov8Detector:
+    def __init__(self, model_path="models/yolov8n-face.pt", 
+                 conf_threshold=0.5, iou_threshold=0.45, verbose=False):
+        self.model_path = model_path
+        self.conf_threshold = conf_threshold
+        self.iou_threshold = iou_threshold
+        self.verbose = verbose
+        
+        # Load YOLO model
+        self.model = YOLO(self.model_path)
+\end{lstlisting}
+
+Key features of the YOLOv8 implementation:
+\begin{itemize}
+    \item Higher accuracy for detecting faces in challenging conditions
+    \item Robust to varied poses, occlusions, and lighting variations
+    \item Good performance for detecting multiple faces at different scales
+    \item Higher computational requirements compared to MediaPipe
+\end{itemize}
+
+\subsection{YOLOv8 ONNX Runtime Detector}
+This implementation uses the ONNX Runtime to execute the YOLOv8 model. ONNX (Open Neural Network Exchange) is an open standard for representing machine learning models, enabling interoperability between different frameworks.
+
+\begin{lstlisting}[language=Python, caption=YOLOv8 ONNX Runtime Implementation]
+class Yolov8OnnxRuntimeDetector:
+    def __init__(self, model_path="models/yolov8n_face.onnx", 
+                 conf_threshold=0.5, iou_threshold=0.45,
+                 input_shape=(640, 640), verbose=False):
+        self.model_path = model_path
+        self.conf_threshold = conf_threshold
+        self.iou_threshold = iou_threshold
+        self.input_shape = input_shape
+        self.verbose = verbose
+        
+        # Initialize ONNX Runtime session
+        self.session = onnxruntime.InferenceSession(
+            self.model_path, 
+            providers=['CUDAExecutionProvider', 'CPUExecutionProvider']
+        )
+        
+        # Get model metadata
+        self.input_name = self.session.get_inputs()[0].name
+        self.output_names = [output.name for output in self.session.get_outputs()]
+\end{lstlisting}
+
+Key features of the YOLOv8 ONNX implementation:
+\begin{itemize}
+    \item Cross-platform compatibility with optimized inference
+    \item Support for hardware acceleration via CUDA or other backends
+    \item Similar accuracy to the PyTorch YOLOv8 implementation
+    \item Potentially faster inference on certain hardware configurations
+\end{itemize}
+
+\section{Unified Detector Interface}
+To make the different detection models interchangeable, a unified interface is provided through the \texttt{Detector} class. This abstraction allows the rest of the system to work with any detection model without modification.
+
+\begin{lstlisting}[language=Python, caption=Unified Detector Interface]
+class Detector:
+    def __init__(self, detector_type=None, detection_faces=None, verbose=False):
+        # Get default model type from config if not specified
+        self.detector_type = detector_type or detection_settings.get("default_model", "mediapipe")
+        self.detection_faces = detection_faces or DetectionFaces()
+        self.verbose = verbose
+        
+        # Initialize the appropriate detector based on configuration
+        if self.detector_type == "mediapipe":
+            confidence = detection_settings.get("mediapipe", {}).get("min_detection_confidence", 0.5)
+            self.detector = MediaPipeDetector(min_detection_confidence=confidence, verbose=verbose)
+        
+        elif self.detector_type == "yolov8":
+            model_path = detection_settings.get("yolov8", {}).get("model_path", "models/yolov8n-face.pt") 
+            conf_threshold = detection_settings.get("yolov8", {}).get("confidence_threshold", 0.5)
+            iou_threshold = detection_settings.get("yolov8", {}).get("iou_threshold", 0.45)
+            
+            self.detector = Yolov8Detector(
+                model_path=model_path,
+                conf_threshold=conf_threshold,
+                iou_threshold=iou_threshold,
+                verbose=verbose
+            )
+        
+        elif self.detector_type == "yolov8_onnx":
+            model_path = detection_settings.get("yolov8_onnx", {}).get("model_path", "models/yolov8n_face.onnx")
+            conf_threshold = detection_settings.get("yolov8_onnx", {}).get("confidence_threshold", 0.5)
+            iou_threshold = detection_settings.get("yolov8_onnx", {}).get("iou_threshold", 0.45)
+            input_shape = tuple(detection_settings.get("yolov8_onnx", {}).get("input_shape", [640, 640]))
+            
+            self.detector = Yolov8OnnxRuntimeDetector(
+                model_path=model_path,
+                conf_threshold=conf_threshold,
+                iou_threshold=iou_threshold,
+                input_shape=input_shape,
+                verbose=verbose
+            )
+\end{lstlisting}
+
+\section{Detection Result Representation}
+The system uses standardized data structures to represent detection results, regardless of the detection model used:
+
+\subsection{DetectionFaces}
+This class stores information about detected faces:
+\begin{lstlisting}[language=Python]
+class DetectionFaces:
+    def __init__(self):
+        self.boxes = []         # Bounding boxes [x, y, w, h]
+        self.scores = []        # Confidence scores
+        self.landmarks = []     # Facial landmarks
+\end{lstlisting}
+
+\subsection{DetectionResult}
+This class encapsulates the complete detection result:
+\begin{lstlisting}[language=Python]
+class DetectionResult:
+    def __init__(self, detection_faces=None, embeddings=None):
+        self.detection_faces = detection_faces or DetectionFaces()
+        self.detection_embeddings = DetectionEmbedding() if embeddings is None else embeddings
+        self.timestamp = time.time()
+\end{lstlisting}
+
+\section{Performance Comparison}
+The three detection models offer different trade-offs between accuracy, speed, and resource utilization:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{Accuracy} & \textbf{Speed (ms/frame)} & \textbf{Resource Usage} \\
+\midrule
+MediaPipe & Good & 15-25 & Low \\
+YOLOv8 & Very Good & 30-50 & High \\
+YOLOv8 ONNX & Very Good & 25-45 & Medium \\
+\bottomrule
+\end{tabular}
+\caption{Performance comparison of detection models (benchmarked on an Intel i7 CPU)}
+\label{tab:detection_performance}
+\end{table}
+
+\section{Configurable Parameters}
+Each detection model exposes several parameters that can be tuned via the configuration system:
+
+\begin{itemize}
+    \item \texttt{min\_detection\_confidence}: Minimum confidence threshold for face detection
+    \item \texttt{conf\_threshold}: Confidence threshold for YOLOv8 detections
+    \item \texttt{iou\_threshold}: Intersection over Union threshold for non-maximum suppression
+    \item \texttt{input\_shape}: Input image dimensions for the model
+    \item \texttt{model\_path}: Path to the model file
+\end{itemize}
+
+These parameters allow for fine-tuning the balance between detection accuracy and performance based on the specific requirements of the application.

@@ -54,7 +54,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 EXPOSE 8000
 
 # Command to run the application
-ENTRYPOINT ["python", "run.py", "--mode", "api", "--port", "8000"]
+# ENTRYPOINT ["python", "run.py", "--mode", "api", "--port", "8000"]
 
 # Alternative commands:
 # For camera mode: python run.py --mode camera
