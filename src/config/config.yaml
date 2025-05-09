@@ -1,0 +1,123 @@
+# Face Recognition System Configuration
+
+# Application defaults
+app:
+  default_mode: "camera"  # Options: camera, image, api
+  verbose: false
+  version: "3.0.0"
+  temp_dir: "/tmp/face_recognizer"
+  logs_dir: "logs"
+
+# API/Service settings
+api:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  templates_dir: "src/api/templates"
+  static_dir: "src/api/static"
+  session_secret: "your-secret-key-here"
+
+# Camera settings
+camera:
+  default_index: 0
+  resolution:
+    width: 640
+    height: 480
+  fps: 30
+  resize_for_processing:
+    width: 480
+    height: 360
+  show_gui: false
+  raspi_ip: "192.168.1.17"  # Raspberry Pi IP address for remote camera access
+
+# Detection models
+detection:
+  default_model: "mediapipe"  # Options: mediapipe, yolov8, yolov8_onnx
+  
+  mediapipe:
+    min_detection_confidence: 0.5
+    model_path: null  # Built-in model
+  
+  yolov8:
+    model_path: "models/yolov8n-face.pt"
+    confidence_threshold: 0.5
+    iou_threshold: 0.45
+  
+  yolov8_onnx:
+    model_path: "models/yolov8n_face.onnx"
+    confidence_threshold: 0.5
+    iou_threshold: 0.45
+    input_shape: [640, 640]
+  
+  # Face mesh landmarks detection (MediaPipe)
+  face_mesh:
+    max_faces: 1
+    min_detection_confidence: 0.5
+    min_tracking_confidence: 0.5
+    refine_landmarks: true
+
+# Face recognition model
+recognition:
+  model_name: "Facenet512"
+  facenet:
+    model_path: "models/facenet.tflite"
+    input_shape: [160, 160]
+    output_size: 512
+  
+  preprocessing:
+    normalize: true
+    target_size: [160, 160]
+
+# Verification thresholds
+verification:
+  metrics: ["euclidean", "cosine", "euclidean_l2"]
+  require_all_metrics: true
+  thresholds:
+    Facenet512:
+      cosine: 0.30
+      euclidean: 23.56
+      euclidean_l2: 1.04
+    default:
+      cosine: 0.40
+      euclidean: 0.55
+      euclidean_l2: 0.75
+
+# Drowsiness detection
+drowsiness:
+  enabled: false
+  ear_threshold: 0.25  # Eye Aspect Ratio threshold
+  mar_threshold: 0.5   # Mouth Aspect Ratio threshold
+  drowsy_time_threshold: 2.0  # Time in seconds
+  ear_frames: 20  # Number of frames to keep for EAR history
+  text_position: [10, 30]  # Position to display status text
+
+# Database settings
+database:
+  user_embeddings_file: "data/users_embeddings.csv"
+  create_if_missing: true
+  
+  # Remote database service settings (if using)
+  service:
+    host: "db_service"
+    port: 5000
+    api_key: ""
+    use_remote: false
+
+# Face alignment
+alignment:
+  min_alignment_degree: 5.0  # Minimum degree for face alignment
+  eye_cascade_path: ""  # Uses OpenCV's built-in if empty
+
+# Image processing
+image:
+  detection_box_alpha: 0.3  # Alpha value for detection box overlay
+  enable_landmarks_drawing: true
+
+# Output settings
+output:
+  save_results: false
+  output_path: "results"
+  json_filename: "recognition_results.json"
+  draw_bounding_boxes: true
+  draw_landmarks: true
+  draw_user_names: true

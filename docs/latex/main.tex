@@ -1,0 +1,136 @@
+\documentclass[12pt,a4paper]{report}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+% Page setup
+\geometry{a4paper, margin=1in}
+
+% Code formatting
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+% Set header and footer
+\fancyhdr{fancy}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Face Recognition System}
+\rhead{Graduation Project}
+\cfoot{\thepage}
+
+% Title formatting
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+% Document info
+\title{%
+  \textbf{Real-Time Face Recognition System} \\
+  \large A Comprehensive Implementation using Multiple Detection Models and Verification Techniques}
+\author{Hatem Mohamed}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\input{sections/abstract}
+
+\chapter{Introduction}
+\input{sections/introduction}
+
+\chapter{System Architecture}
+\input{sections/architecture}
+
+\chapter{Configuration System}
+\input{sections/configuration}
+
+\chapter{Face Detection}
+\input{sections/face_detection}
+
+\chapter{Face Recognition}
+\input{sections/face_recognition}
+
+\chapter{Face Verification}
+\input{sections/face_verification}
+
+\chapter{Face Alignment}
+\input{sections/face_alignment}
+
+\chapter{Drowsiness Detection}
+\input{sections/drowsiness_detection}
+
+\chapter{Database Implementation}
+\input{sections/database}
+
+\chapter{Camera and Image Processing}
+\input{sections/camera_image_processing}
+
+\chapter{API and Web Interface}
+\input{sections/api_web}
+
+\chapter{Testing and Performance}
+\input{sections/testing_performance}
+
+\chapter{Deployment}
+\input{sections/deployment}
+
+\chapter{Future Work}
+\input{sections/future_work}
+
+\chapter{Conclusion}
+\input{sections/conclusion}
+
+\appendix
+\chapter{Installation Guide}
+\input{sections/appendix_installation}
+
+\chapter{Configuration Reference}
+\input{sections/appendix_config}
+
+\chapter{API Reference}
+\input{sections/appendix_api}
+
+\chapter{Code Architecture}
+\input{sections/appendix_code}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

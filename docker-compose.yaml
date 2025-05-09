@@ -1,10 +1,10 @@
 version: '3.8'
 services:
   face_recognizer:
-    image:  htmmhmd/face_recognition:2.3.9.1
-    # build: 
-    #   context: .
-    #   dockerfile: Dockerfile
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: htmmhmd/face_recognition:3.0.0
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -26,11 +26,14 @@ services:
     networks:
       - face_net
     ports:
-      - "9000:9000"
-    command: ["python", "main.py", "-roc","-ch" , "-ed"]
+      - "8000:8000"
+    command: ["python", "run.py", "--mode", "api", "--port", "8000"]
 
   drowsiness_detector:
-    image:  htmmhmd/face_recognition:2.3.9.1
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: htmmhmd/face_recognition:3.0.0
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
@@ -48,13 +51,13 @@ services:
       - face_net
     depends_on:
       - mjpg-streamer
-    command: ["python", "run_drawsy.py", "-roc","-ch","-ed"]
+    command: ["python", "run.py", "--mode", "camera", "--enable-drowsiness", "--detector", "mediapipe"]
 
   db_service:
-    image: htmmhmd/face_recognition_db:2.3.9.1
-    # build: 
-    #   context: .
-    #   dockerfile: Dockerfile.db
+    build: 
+      context: .
+      dockerfile: Dockerfile.db
+    image: htmmhmd/face_recognition_db:3.0.0
     volumes:
       - face_db_data:/data:rw
     ports:
@@ -62,10 +65,9 @@ services:
     restart: unless-stopped
     networks:
       - face_net
-    command: ["python", "database/db_api.py"]
+    command: ["python", "src/database/api/db_api.py"]
 
   mjpg-streamer:
-
     image: htmmhmd/mjpg-streamer:latest
     ports:
       - "8080:8080"

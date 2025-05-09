@@ -1,1 +1,0 @@
-from .Verify import FaceVerifier

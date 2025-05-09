@@ -186,10 +186,10 @@ class DockerAutomation:
                     # Handle 'init' command - start Docker container and reply with '1'
                     success = self.run_docker_container()
                     if success:
-                        self.socket.send_string("1")
+                        self.socket.send_string("init_ack")
                         logger.info("Sent response: 1")
                     else:
-                        self.socket.send_string("0")
+                        self.socket.send_string("init_nack")
                         logger.info("Sent response: 0 (Docker container failed to start)")
                 
                 elif message.lower() == "capture":
