@@ -148,3 +148,4 @@ Model/Detection/YoloV8OnnxRuntime/yolov8n-face.onnx
 Model/YoloDetection/YoloDetector/model.pt
 Model/YoloDetection/YoloV8OnnxRuntime/model.onnx
 Model/FaceNet/facenet.tflite
+/models-weights
