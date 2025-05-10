@@ -35,7 +35,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy only necessary database files
 COPY --from=builder /app/requirements.sql.txt .
-COPY src/database /app/database
+COPY src/database /app/src/database
 
 # Create data directory with proper permissions
 RUN mkdir -p /data && \
@@ -43,7 +43,7 @@ RUN mkdir -p /data && \
 
 # Create non-root user
 RUN useradd -u 1000 -m dbuser && \
-    chown -R dbuser:dbuser /app/database /data
+    chown -R dbuser:dbuser /app/src/database /data
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1

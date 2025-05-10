@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, render_template
-from db_handler import FaceDatabase
+from src.database.face_db import FaceDatabase
 from  numpy import frombuffer, float32
 import base64
 
