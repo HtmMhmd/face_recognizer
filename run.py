@@ -4,8 +4,7 @@ import os
 import sys
 import time
 import cv2
-from src.services.image_processor import ImageProcessor
-from src.services.camera_service import CameraService
+from src.services import ImageProcessor, run_with_camera_handler, run_camera_feed, process_image
 from src.api.app import start_api_server
 from src.config import settings, app_settings, camera_settings, detection_settings, drowsiness_settings
 
@@ -24,7 +23,7 @@ def parse_args():
                         help="Camera index to use")
     
     parser.add_argument("--detector", type=str, default=detection_settings.get("default_model", "mediapipe"),
-                        choices=["mediapipe", "yolov8", "yolov8_onnx"],
+                        choices=["mediapipe", "yolov8", "yolov8_onnx", "landmark"],
                         help="Face detector model to use")
     
     parser.add_argument("--enable-drowsiness", action="store_true", default=drowsiness_settings.get("enabled", False),
@@ -39,8 +38,12 @@ def parse_args():
     parser.add_argument("--port", type=int, default=settings.api.get("port", 8000),
                         help="Port for API server in API mode")
     
-    parser.add_argument("--verbose", action="store_true", default=app_settings.get("verbose", False),
+    parser.add_argument("--verbose", action="store_true", default=app_settings.get("verbose", True),
                         help="Enable verbose output")
+    
+    # Add handler type argument for camera mode
+    parser.add_argument("--handler", type=str, choices=["threaded", "regular"], default="threaded",
+                        help="Camera handler type: threaded (CameraHandler) or regular (direct OpenCV)")
     
     args = parser.parse_args()
     
@@ -62,7 +65,7 @@ def main():
     
     # Handle different application modes
     if args.mode == "image":
-        process_image(args)
+        process_image_file(args)
     elif args.mode == "camera":
         process_camera(args)
     elif args.mode == "api":
@@ -71,8 +74,8 @@ def main():
         print(f"Unknown mode: {args.mode}")
         sys.exit(1)
 
-def process_image(args):
-    """Process a single image."""
+def process_image_file(args):
+    """Process a single image using the image service."""
     if not os.path.exists(args.image_path):
         print(f"Image file not found: {args.image_path}")
         sys.exit(1)
@@ -82,58 +85,61 @@ def process_image(args):
         print(f"Failed to read image: {args.image_path}")
         sys.exit(1)
     
-    processor = ImageProcessor(model_architecture=args.detector, verbose=args.verbose)
-    
-    # Process the image
-    results = processor.process_image(image)
-    
-    # Draw detection results on the image
-    if results:
-        image = processor.draw_detections(image)
-        
-        # Verify faces if any detected
-        if len(results.detection_faces.boxes) > 0:
-            verification_results = processor.verify_faces()
-            if verification_results:
-                image = processor.draw_user_names(image, verification_results)
-    
-    # Show the result
-    cv2.imshow("Face Detection", image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    
-    # Save results if requested
-    if args.output:
-        cv2.imwrite(args.output, image)
-        print(f"Results saved to {args.output}")
-
-def process_camera(args):
-    """Process video from camera."""
-    # Initialize camera service
-    camera_service = CameraService(
-        camera_index=args.camera,
+    # Use the image service function instead of directly using ImageProcessor
+    processed_image = process_image(
+        image, 
         detector_type=args.detector,
-        enable_drowsiness=args.enable_drowsiness,
-        show_gui=args.gui,
-        save_output=args.output is not None,
         output_path=args.output,
         verbose=args.verbose
     )
     
-    # Start camera service
-    try:
-        camera_service.start()
-        while True:
-            if args.gui:
-                # Wait for key press to exit
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
-            else:
-                time.sleep(0.1)
-    except KeyboardInterrupt:
-        print("Interrupted by user")
-    finally:
-        camera_service.stop()
+    # Show the result
+    cv2.imshow("Face Detection", processed_image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def process_camera(args):
+    """Process video from camera using the selected camera handler."""
+    if args.verbose:
+        print(f"Using {args.detector} detector with {'threaded' if args.handler == 'threaded' else 'regular'} camera handler")
+    
+    # Handle landmark detector mode
+    if args.detector == "landmark":
+        if args.verbose:
+            print("Landmark mode selected: Only performing landmark detection")
+        run_with_camera_handler(
+            detector_type=args.detector,
+            enable_drowsiness=False,  # Disable drowsiness detection in landmark mode
+            show_gui=args.gui,
+            output_json=args.output,
+            camera_index=args.camera,
+            verbose=args.verbose
+        )
+        return
+
+    # Choose the appropriate camera handler based on arguments
+    if args.handler == "threaded":
+        if args.verbose:
+            print("Using threaded camera handler")
+        run_with_camera_handler(
+            detector_type=args.detector,
+            enable_drowsiness=args.enable_drowsiness,
+            show_gui=args.gui,
+            output_json=args.output,
+            camera_index=args.camera,
+            verbose=args.verbose
+        )
+    else:
+        if args.verbose:
+            print("Using regular camera handler")
+        run_camera_feed(
+            detector_type=args.detector,
+            enable_drowsiness=args.enable_drowsiness,
+            show_gui=args.gui,
+            output_json=args.output,
+            camera_index=args.camera,
+            verbose=args.verbose
+        )
 
 def start_api(args):
     """Start API server mode."""
@@ -141,24 +147,16 @@ def start_api(args):
         print(f"Starting API server on port {args.port}")
     
     # Initialize camera service for API
-    camera_service = CameraService(
-        camera_index=args.camera,
-        detector_type=args.detector,
-        enable_drowsiness=args.enable_drowsiness,
-        show_gui=False,  # No GUI in API mode
+    camera_service = ImageProcessor(
+        model_architecture=args.detector,
         verbose=args.verbose
     )
     
-    # Start camera service
-    camera_service.start()
-    
+    # Start API server
     try:
-        # Start API server
         start_api_server(camera_service, port=args.port)
     except KeyboardInterrupt:
         print("API server interrupted by user")
-    finally:
-        camera_service.stop()
 
 if __name__ == "__main__":
     main()

@@ -162,9 +162,15 @@ def run_with_camera_handler(detector_type='mediapipe', enable_drowsiness=False, 
             # Process the frame
             embeddings = image_processor.process_image(frame)
             
-            # Continue with face detection and recognition
-            # (Similar logic as in run_camera_feed)
-            
+            # Add landmark detection and drowsiness detection functionality
+            landmarks = image_processor.detect_landmarks(frame)
+            if landmarks:
+                display_frame = image_processor.draw_landmarks(frame)
+
+            # Process drowsiness detection if enabled
+            if drowsiness_detector and landmarks:
+                display_frame = drowsiness_detector.process_frame(display_frame, landmarks)
+        
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
                 

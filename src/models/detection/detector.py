@@ -3,9 +3,10 @@ import numpy as np
 from typing import Optional, List, Tuple
 
 from src.models.detection.detection_faces import DetectionFaces
-from src.models.detection.mediapipe_detector import MediaPipeDetector
+from src.models.detection.mediapipe_detector import MediapipeFaceDetector
 from src.models.detection.yolo_detector import Yolov8Detector, Yolov8OnnxRuntimeDetector
 from src.config import detection_settings
+from src.models.detection.mediapipe_landmarker import FaceMeshDetector
 
 class Detector:
     """
@@ -33,14 +34,14 @@ class Detector:
         self.verbose = verbose
         
         # Validate detector type
-        valid_types = ["mediapipe", "yolov8", "yolov8_onnx"]
+        valid_types = ["mediapipe", "yolov8", "yolov8_onnx", "landmark"]
         if self.detector_type not in valid_types:
             raise ValueError(f"Invalid detector type: {self.detector_type}. Must be one of {valid_types}")
         
         # Initialize the appropriate detector
         if self.detector_type == "mediapipe":
             confidence = detection_settings.get("mediapipe", {}).get("min_detection_confidence", 0.5)
-            self.detector = MediaPipeDetector(min_detection_confidence=confidence, verbose=verbose)
+            self.detector = MediapipeFaceDetector(min_detection_conf=confidence, verbose=verbose)
         
         elif self.detector_type == "yolov8":
             model_path = detection_settings.get("yolov8", {}).get("model_path", "models/yolov8n-face.pt") 
@@ -67,9 +68,17 @@ class Detector:
                 input_shape=input_shape,
                 verbose=verbose
             )
-            
+        
+        elif self.detector_type == "landmark":
+            confidence = detection_settings.get("mediapipe", {}).get("min_detection_confidence", 0.5)
+            self.detector = None  # No face detection, only landmarking
+            # self.landmarker = FaceMeshDetector(max_faces=1, min_detection_conf=confidence, verbose=verbose)
+        
         if self.verbose:
             print(f"Initialized {self.detector_type} detector")
+        
+        self.landmarker = FaceMeshDetector(max_faces=1, min_detection_conf=confidence, verbose=verbose)
+
     
     def detect(self, image) -> DetectionFaces:
         """
@@ -85,7 +94,7 @@ class Detector:
             raise ValueError("Input image is None")
             
         start_time = time.time()
-        detection_faces = self.detector.detect(image)
+        detection_faces = self.detector.detect_faces(image)
         end_time = time.time()
         
         if self.verbose:
@@ -107,7 +116,7 @@ class Detector:
         Returns:
             The detected landmarks
         """
-        return self.detector.landmark(image)
+        return self.landmarker.landmark(image)
     
     def get_eye_mouth_keypoints(self):
         """
@@ -116,4 +125,33 @@ class Detector:
         Returns:
             Dictionary containing eye and mouth keypoints
         """
-        return self.detector.get_eye_mouth_keypoints()
+        return self.landmarker.get_eye_mouth_keypoints()
+    
+    def draw_detections(self, image):
+        """
+        Draw the detected bounding boxes on the image.
+        
+        Args:
+            image: The input image
+            
+        Returns:
+            The image with drawn detections
+        """
+        return self.detector.draw_detections(image)
+    def draw_landmarks(self, image):
+        """
+        Draw the detected landmarks on the image.
+        Args:
+            image: The input image
+        Returns:
+            The image with drawn landmarks
+        """
+        return self.landmarker.draw_landmarks(image)
+    def get_detections(self):
+        """
+        Get the detected faces.
+        
+        Returns:
+            The detected faces
+        """
+        return self.detection_faces

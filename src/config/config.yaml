@@ -3,7 +3,7 @@
 # Application defaults
 app:
   default_mode: "camera"  # Options: camera, image, api
-  verbose: false
+  verbose: true
   version: "3.0.0"
   temp_dir: "/tmp/face_recognizer"
   logs_dir: "logs"

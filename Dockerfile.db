@@ -36,7 +36,6 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Copy only necessary database files
 COPY --from=builder /app/requirements.sql.txt .
 COPY database /app/database
-COPY db_service.py .
 
 # Create data directory with proper permissions
 RUN mkdir -p /data && \
@@ -56,6 +55,3 @@ USER dbuser
 
 # Expose the database port if needed
 EXPOSE 5000
-
-# Command to run the database service
-CMD ["python", "db_service.py"]

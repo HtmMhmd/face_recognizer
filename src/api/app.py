@@ -3,7 +3,7 @@ import cv2
 import time
 from threading import Thread
 import os
-from src.config import api_settings, app_settings
+from src.config import api_settings, app_settings, camera_settings
 
 # Create Flask application
 app = Flask(__name__, 
