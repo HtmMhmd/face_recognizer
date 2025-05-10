@@ -35,7 +35,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy only necessary database files
 COPY --from=builder /app/requirements.sql.txt .
-COPY database /app/database
+COPY src/database /app/database
 
 # Create data directory with proper permissions
 RUN mkdir -p /data && \
