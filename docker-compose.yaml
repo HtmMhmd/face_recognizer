@@ -27,7 +27,7 @@ services:
       - face_net
     ports:
       - "8000:8000"
-    command: ["python", "run.py", ]
+    command: ["python", "run.py", '--handler', 'regular']
 
   drowsiness_detector:
     # build: 
@@ -51,7 +51,7 @@ services:
       - face_net
     depends_on:
       - mjpg-streamer
-    command: ["python", "run.py", "--enable-drowsiness", "--detector", "landmark"]
+    # command: ["python", "run.py", "--enable-drowsiness", "--detector", "landmark"]
 
   db_service:
     # build: 
