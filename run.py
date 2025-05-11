@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import cv2
-from src.services import ImageProcessor, run_with_camera_handler, run_camera_feed, process_image
+from src.services import ImageProcessor, run_camera_feed, process_image
 from src.api.app import start_api_server
 from src.config import settings, app_settings, camera_settings, detection_settings, drowsiness_settings
 
@@ -107,28 +107,17 @@ def process_camera(args):
     if args.detector == "landmark":
         if args.verbose:
             print("Landmark mode selected: Only performing landmark detection")
-        run_with_camera_handler(
+        run_camera_feed(
             detector_type=args.detector,
-            enable_drowsiness=False,  # Disable drowsiness detection in landmark mode
+            enable_drowsiness=True,  # Disable drowsiness detection in landmark mode
             show_gui=args.gui,
             output_json=args.output,
             camera_index=args.camera,
-            verbose=args.verbose
+            verbose=args.verbose,
+            camera_type=args.handler  
         )
         return
 
-    # Choose the appropriate camera handler based on arguments
-    if args.handler == "threaded":
-        if args.verbose:
-            print("Using threaded camera handler")
-        run_with_camera_handler(
-            detector_type=args.detector,
-            enable_drowsiness=args.enable_drowsiness,
-            show_gui=args.gui,
-            output_json=args.output,
-            camera_index=args.camera,
-            verbose=args.verbose
-        )
     else:
         if args.verbose:
             print("Using regular camera handler")
@@ -138,7 +127,8 @@ def process_camera(args):
             show_gui=args.gui,
             output_json=args.output,
             camera_index=args.camera,
-            verbose=args.verbose
+            verbose=args.verbose,
+            camera_type=args.handler  # Use the specified camera handler
         )
 
 def start_api(args):

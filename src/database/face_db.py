@@ -1,11 +1,11 @@
-from .handlers.user_db_handler import UsersDatabaseHandeler
+from .handlers.db_handler import UserDatabase
 
 class FaceDatabase:
     """
     A wrapper class for face database operations.
     """
     def __init__(self):
-        self.db_handler = UsersDatabaseHandeler()
+        self.db_handler = UserDatabase()
 
     def get_all_embeddings(self):
         """Get all user embeddings from the database."""

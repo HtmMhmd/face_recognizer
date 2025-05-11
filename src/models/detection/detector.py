@@ -69,15 +69,14 @@ class Detector:
                 verbose=verbose
             )
         
-        elif self.detector_type == "landmark":
-            confidence = detection_settings.get("mediapipe", {}).get("min_detection_confidence", 0.5)
+        elif self.detector_type == "landmark":         
             self.detector = None  # No face detection, only landmarking
-            # self.landmarker = FaceMeshDetector(max_faces=1, min_detection_conf=confidence, verbose=verbose)
         
         if self.verbose:
             print(f"Initialized {self.detector_type} detector")
-        
-        self.landmarker = FaceMeshDetector(max_faces=1, min_detection_conf=confidence, verbose=verbose)
+        max_faces = detection_settings.get("face_mesh", {}).get("max_faces", 1)
+        confidence = detection_settings.get("face_mesh", {}).get("min_detection_confidence", 0.5)
+        self.landmarker = FaceMeshDetector(max_faces=max_faces, min_detection_conf=confidence, verbose=verbose)
 
     
     def detect(self, image) -> DetectionFaces:

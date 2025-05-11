@@ -28,7 +28,7 @@ camera:
     width: 480
     height: 360
   show_gui: false
-  raspi_ip: "192.168.1.17"  # Raspberry Pi IP address for remote camera access
+  raspi_ip: "192.168.1.37"  # Raspberry Pi IP address for remote camera access
 
 # Detection models
 detection:
@@ -39,12 +39,12 @@ detection:
     model_path: null  # Built-in model
   
   yolov8:
-    model_path: "models/yolov8n-face.pt"
+    model_path: "models-weights/yolov8n-face.pt"
     confidence_threshold: 0.5
     iou_threshold: 0.45
   
   yolov8_onnx:
-    model_path: "models/yolov8n_face.onnx"
+    model_path: "models-weights/yolov8n_face.onnx"
     confidence_threshold: 0.5
     iou_threshold: 0.45
     input_shape: [640, 640]
@@ -60,7 +60,7 @@ detection:
 recognition:
   model_name: "Facenet512"
   facenet:
-    model_path: "models/facenet.tflite"
+    model_path: "models-weights/facenet.tflite"
     input_shape: [160, 160]
     output_size: 512
   

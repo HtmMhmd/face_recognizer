@@ -1,0 +1,7 @@
+[core]
+    remote = myremote
+['remote "myremote"']
+    url = gdrive://1A-WNl2MFxRXJnwdVWAChjzurea8BaiXU
+    gdrive_use_service_account = true
+    gdrive_acknowledge_abuse = true
+    gdrive_service_account_json_file_path = /home/hatem/Downloads/dvc-face-recognizer-e9c05e567127.json

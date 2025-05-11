@@ -69,7 +69,7 @@ class CameraHandler:
         self.timestamp = None
 
         # Get Raspberry Pi IP from config
-        raspi_ip = camera_settings.get("raspi_ip", "192.168.1.17")
+        raspi_ip = camera_settings.get("raspi_ip", "192.168.1.37")
         self.cap = cv2.VideoCapture(f"http://{raspi_ip}:8080/?action=stream_{camera_num}")
 
         if not self.cap.isOpened():

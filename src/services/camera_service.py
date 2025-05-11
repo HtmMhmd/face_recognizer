@@ -8,9 +8,10 @@ from src.core.drowsiness.detection import DrowsinessDetector
 from src.utils.camera.camera_handler import CameraHandler
 
 def run_camera_feed(detector_type='mediapipe', enable_drowsiness=False, show_gui=False, 
-                   output_json=None, camera_index=0, verbose=False):
+                   output_json=None, camera_index=0, verbose=False, camera_type='threaded'):
     """
-    Run the face recognition system on a live camera feed.
+    Unified function to run the face recognition system on a live camera feed.
+    Supports both threaded (CameraHandler) and regular (OpenCV) camera implementations.
     
     Args:
         detector_type (str): Type of detector to use ('mediapipe', 'yolov8', 'yolov8_onnx')
@@ -19,8 +20,9 @@ def run_camera_feed(detector_type='mediapipe', enable_drowsiness=False, show_gui
         output_json (str): Path to save JSON output of face recognition results
         camera_index (int): Camera index to use (default: 0)
         verbose (bool): Enable verbose output
+        camera_type (str): Type of camera to use ('threaded' for CameraHandler or 'regular' for OpenCV)
     """
-    print(f"[INFO] Starting face recognition with {detector_type} detector")
+    print(f"[INFO] Starting face recognition with {detector_type} detector using {camera_type} camera")
     
     # Initialize image processor
     image_processor = ImageProcessor(model_architecture=detector_type, verbose=verbose)
@@ -30,22 +32,35 @@ def run_camera_feed(detector_type='mediapipe', enable_drowsiness=False, show_gui
     
     # Open video capture
     print(f"[INFO] Opening camera {camera_index}")
-    cap = cv2.VideoCapture(camera_index)
-    if not cap.isOpened():
-        print(f"[ERROR] Could not open camera {camera_index}")
-        return
-    
+    if camera_type == 'threaded':
+        # Use CameraHandler for threaded video capture
+        camera = CameraHandler(camera_index)
+        is_threaded = True
+    else:  # regular OpenCV camera
+        camera = cv2.VideoCapture(camera_index)
+        is_threaded = False
+        if not camera.isOpened():
+            print(f"[ERROR] Could not open camera {camera_index}")
+            return
+        
     try:
         # Dictionary to store recognition results
         recognition_results = {}
         
         print("[INFO] Processing video stream. Press 'q' to quit.")
         while True:
-            # Read a frame
-            ret, frame = cap.read()
-            if not ret:
+            # Read a frame - handle different return types from different camera implementations
+            if is_threaded:
+                # CameraHandler returns (timestamp, frame)
+                timestamp_cam, frame = camera.read()
+                ret = frame is not None
+            else:
+                # OpenCV VideoCapture returns (ret, frame)
+                ret, frame = camera.read()
+                
+            if not ret or frame is None:
                 print("[ERROR] Failed to grab frame")
-                break
+                continue
             
             # Resize the frame for faster processing
             frame = cv2.resize(frame, (480, 360))
@@ -83,7 +98,10 @@ def run_camera_feed(detector_type='mediapipe', enable_drowsiness=False, show_gui
             
             # Process drowsiness detection if enabled
             if drowsiness_detector and eye_mouth:
-                display_frame = drowsiness_detector.process_frame(display_frame, eye_mouth)
+                # The drowsiness detector expects a dictionary with specific keys
+                # Make sure eye_mouth has the required format
+                if isinstance(eye_mouth, dict) and all(key in eye_mouth for key in ['left_eye', 'right_eye']):
+                    display_frame = drowsiness_detector.process_frame(display_frame, eye_mouth)
             
             # Print recognition results
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -117,7 +135,7 @@ def run_camera_feed(detector_type='mediapipe', enable_drowsiness=False, show_gui
             
     finally:
         # Clean up
-        cap.release()
+        camera.release()
         if show_gui:
             cv2.destroyAllWindows()
         
@@ -136,56 +154,66 @@ def run_with_camera_handler(detector_type='mediapipe', enable_drowsiness=False, 
                           output_json=None, camera_index=0, verbose=False):
     """
     Alternative implementation using the threaded CameraHandler for potentially better performance.
+    This is an alias for run_camera_feed with camera_type='threaded'.
     """
-    print(f"[INFO] Starting face recognition with {detector_type} detector using CameraHandler")
+    return run_camera_feed(
+        detector_type=detector_type,
+        enable_drowsiness=enable_drowsiness,
+        show_gui=show_gui,
+        output_json=output_json,
+        camera_index=camera_index,
+        verbose=verbose,
+        camera_type='threaded'
+    )
+
+def run_with_regular_camera(detector_type='mediapipe', enable_drowsiness=False, show_gui=False, 
+                          output_json=None, camera_index=0, verbose=False):
+    """
+    Implementation using the regular OpenCV camera.
+    This is an alias for run_camera_feed with camera_type='regular'.
+    """
+    return run_camera_feed(
+        detector_type=detector_type,
+        enable_drowsiness=enable_drowsiness,
+        show_gui=show_gui,
+        output_json=output_json,
+        camera_index=camera_index,
+        verbose=verbose,
+        camera_type='regular'
+    )
+
+def run_face_recognition(detector_type='mediapipe', enable_drowsiness=False, show_gui=False, 
+                       output_json=None, camera_index=0, verbose=False, auto_select_camera=True):
+    """
+    Main entry point for face recognition. Automatically selects the best camera implementation
+    unless specified otherwise.
     
-    # Initialize image processor
-    image_processor = ImageProcessor(model_architecture=detector_type, verbose=verbose)
+    Args:
+        detector_type (str): Type of detector to use
+        enable_drowsiness (bool): Enable drowsiness detection
+        show_gui (bool): Show GUI display
+        output_json (str): Path to save results
+        camera_index (int): Camera index
+        verbose (bool): Verbose output
+        auto_select_camera (bool): Whether to automatically select the best camera implementation
+    """
+    camera_type = 'threaded' if auto_select_camera else 'regular'
     
-    # Initialize drowsiness detector if enabled
-    drowsiness_detector = DrowsinessDetector() if enable_drowsiness else None
-    
-    # Initialize camera handler
-    camera = CameraHandler(camera_index)
-    
+    # If running on Raspberry Pi, use regular camera as it might be more stable
     try:
-        recognition_results = {}
+        with open('/proc/cpuinfo', 'r') as f:
+            if 'Raspberry Pi' in f.read():
+                camera_type = 'regular'
+                print("[INFO] Raspberry Pi detected, using regular camera")
+    except:
+        pass
         
-        while True:
-            timestamp, frame = camera.read()
-            if frame is None:
-                continue
-                
-            # Resize the frame
-            frame = cv2.resize(frame, (480, 360))
-
-            # Process the frame
-            embeddings = image_processor.process_image(frame)
-            
-            # Add landmark detection and drowsiness detection functionality
-            landmarks = image_processor.detect_landmarks(frame)
-            if landmarks:
-                display_frame = image_processor.draw_landmarks(frame)
-
-            # Process drowsiness detection if enabled
-            if drowsiness_detector and landmarks:
-                display_frame = drowsiness_detector.process_frame(display_frame, landmarks)
-        
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-                
-    finally:
-        camera.release()
-        if show_gui:
-            cv2.destroyAllWindows()
-            
-        # Save results to JSON if requested
-        if output_json and recognition_results:
-            try:
-                with open(output_json, 'w') as f:
-                    json.dump(recognition_results, f, indent=4)
-                print(f"[INFO] Results saved to {output_json}")
-            except Exception as e:
-                print(f"[ERROR] Failed to save results: {e}")
-                
-        print("[INFO] Face recognition stopped")
+    return run_camera_feed(
+        detector_type=detector_type,
+        enable_drowsiness=enable_drowsiness,
+        show_gui=show_gui,
+        output_json=output_json,
+        camera_index=camera_index,
+        verbose=verbose,
+        camera_type=camera_type
+    )

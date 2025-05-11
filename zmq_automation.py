@@ -5,7 +5,7 @@ import cv2
 import time
 import os
 import logging
-from CameraUtilis.CameraHandler import CameraHandler
+from src.utils.camera.camera_handler import CameraHandler
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 

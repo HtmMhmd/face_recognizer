@@ -3,7 +3,7 @@ import numpy as np
 import os
 from datetime import datetime
 
-class FaceDatabase:
+class UserDatabase:
     def __init__(self, db_path="/data/face_embeddings.db"):
         self.db_path = db_path
         self.db_dir = os.path.dirname(self.db_path)
@@ -94,7 +94,7 @@ class FaceDatabase:
 
 # Example usage:
 if __name__ == '__main__':
-    db = FaceDatabase()  # Adjust size as needed
+    db = UserDatabase()  # Adjust size as needed
 
     # Add a user
     embedding = np.array(np.random.rand(512, 1), dtype='float32')
