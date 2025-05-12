@@ -4,14 +4,21 @@ import time
 import argparse
 import logging
 import numpy as np
+import os
 from src.utils.zmq_utils import ZmqSubscriber, ZmqPublisher, ZmqTopics, ZmqConfig
 from src.services.image_processor import ImageProcessor
 from src.config.settings import Settings
+from src.utils.ml_config import optimize_ml_environment, configure_tflite_runtime, configure_mediapipe
+from src.utils.tflite_helpers import OptimizedTFLiteModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("Image_Processing_Service")
+
+# Apply ML optimizations before model loading - prioritize TFLite runtime
+logger.info("Optimizing ML environment for image processing")
+optimize_ml_environment()
 
 class ImageProcessingService:
     """Service responsible for processing images to detect and crop faces."""

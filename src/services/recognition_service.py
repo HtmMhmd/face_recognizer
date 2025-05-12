@@ -5,6 +5,7 @@ import argparse
 import logging
 import numpy as np
 import json
+import os
 from src.utils.zmq_utils import ZmqSubscriber, ZmqPublisher, ZmqTopics, ZmqConfig
 from src.services.image_processor import ImageProcessor
 from src.database.face_db import FaceDatabase
@@ -13,11 +14,17 @@ from src.core.verification import FaceVerifier
 from src.utils.image import preprocess_image
 from src.models.face_recognition import FaceNetTFLiteHandler
 from src.config.settings import Settings
+from src.utils.ml_config import optimize_ml_environment, configure_tflite_runtime
+from src.utils.tflite_helpers import OptimizedTFLiteModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("Recognition_Service")
+
+# Apply ML optimizations before model loading - prioritize TFLite runtime
+logger.info("Optimizing ML environment for face recognition")
+optimize_ml_environment()
 
 class RecognitionService:
     """Service responsible for face recognition and user verification."""
