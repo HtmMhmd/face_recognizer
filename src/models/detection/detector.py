@@ -154,3 +154,27 @@ class Detector:
             The detected faces
         """
         return self.detection_faces
+
+    def filter_largest_face(self, detection_faces):
+        """
+        Filters the detection results to keep only the largest face.
+        
+        Args:
+            detection_faces: Detection results to filter
+            
+        Returns:
+            DetectionFaces: Filtered detection results with only the largest face
+        """
+        return detection_faces.filter_largest_face()
+
+    def get_gaze_direction(self):
+        """
+        Calculates gaze direction based on the distances between nose and eyes.
+        
+        Returns:
+            dict: Gaze direction info including eye-nose distances and determined direction
+        """
+        if self.detector_type == 'mediapipe' and hasattr(self, 'landmarker'):
+            return self.landmarker.calculate_gaze_direction()
+        else:
+            return {"direction": "unknown", "left_eye_nose_dist": 0, "right_eye_nose_dist": 0, "ratio": 1.0}

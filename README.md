@@ -5,6 +5,8 @@ A comprehensive facial recognition system that can detect, align, and recognize 
 ## 📋 Features
 
 - **Face Detection**: Uses multiple face detection models (MediaPipe, YOLOv8)
+- **Multiple Face Handling**: Intelligently filters multiple detected faces to focus on the largest/closest face
+- **Gaze Direction Detection**: Detects where a person is looking based on eye-nose distances
 - **Face Alignment**: Automatically aligns detected faces for better recognition accuracy
 - **Face Recognition**: FaceNet model for generating face embeddings and recognition
 - **Drowsiness Detection**: Optional eye-aspect ratio based drowsiness detection
@@ -12,6 +14,7 @@ A comprehensive facial recognition system that can detect, align, and recognize 
 - **Web Interface**: Simple web interface for monitoring and verification
 - **API Endpoints**: RESTful API for integration with other systems
 - **Docker Support**: Containerized application for easy deployment
+- **ZMQ Communication**: Efficient message-based communication between microservices
 
 ## 🏗️ Project Structure
 
@@ -78,6 +81,58 @@ face_recognizer/
 
 ## 🎮 Usage
 
+### Running the System with Enhanced Features
+
+We've created new scripts to make it easy to run the face recognition system with the latest features:
+
+1. **Using the Run Script (Recommended)**:
+   ```bash
+   # Make the script executable
+   chmod +x run.sh
+   
+   # Run the complete system with default settings
+   ./run.sh run
+   
+   # Run with specific detector type
+   ./run.sh run --detector=mediapipe
+   
+   # Run without face filtering
+   ./run.sh run --no-filter
+   
+   # Run without gaze detection
+   ./run.sh run --no-gaze
+   
+   # Test just the gaze detection functionality
+   ./run.sh test-gaze
+   
+   # Test the database service
+   ./run.sh test-db
+   
+   # Run the system with Docker
+   ./run.sh docker
+   ```
+
+2. **Using Python Scripts Directly**:
+   ```bash
+   # Run the complete system
+   python run_face_recognition_system.py [options]
+   
+   # Test gaze direction detection
+   python test_gaze_detection.py [options]
+   
+   # Test database service
+   python db_service_test.py
+   ```
+
+3. **Using Service Orchestrator**:
+   ```bash
+   # Run the system with local deployment
+   python service_orchestrator.py
+   
+   # Run with Docker deployment
+   python service_orchestrator.py --docker
+   ```
+
 ### Running the Application
 
 The system supports three modes of operation:
@@ -141,23 +196,112 @@ When running in API mode, access the web interface at:
 ### Full Stack Deployment
 
 ```bash
+# Standard HTTP-based deployment
 docker-compose up
+
+# ZMQ-based microservices deployment
+docker-compose -f docker-compose-zmq.yaml up
 ```
 
 ### Individual Services
 
-The system consists of several services:
+#### Standard Deployment
+
+The standard system consists of several services:
 
 1. **face_recognizer**: Main recognition service with web interface
 2. **drowsiness_detector**: Dedicated drowsiness detection service
 3. **db_service**: Database service for storing user embeddings
 4. **mjpg-streamer**: Camera streaming service
 
+#### ZMQ Microservices Architecture
+
+The ZMQ-based system consists of distributed microservices:
+
+1. **capture-service**: Captures video frames from cameras
+2. **image-processing-service**: Processes images and detects faces
+3. **recognition-service**: Recognizes faces from cropped images
+4. **database-service**: Manages user data and embeddings via ZMQ
+5. **dashboard-service**: Provides web interface and coordinates other services
+6. **mjpg-streamer**: Camera streaming service
+
 Each can be started individually:
 
 ```bash
 docker-compose up face_recognizer
 ```
+
+## 🔄 ZMQ Microservices Architecture
+
+The system includes a ZMQ-based microservices architecture for more scalable and flexible deployment options.
+
+### Architecture Overview
+
+```
++---------------+      +----------------------+      +--------------------+
+|               |      |                      |      |                    |
+| Capture       +----->+ Image Processing     +----->+ Recognition        |
+| Service       |      | Service              |      | Service            |
+|               |      |                      |      |                    |
++-------+-------+      +----------+-----------+      +---------+----------+
+        ^                         ^                            ^
+        |                         |                            |
+        |                         |                            |
++-------+-------------------------+----------------------------+----------+
+|                                                                         |
+|                          Dashboard Service                              |
+|                                                                         |
++-------------------------------------+-----------------------------------+
+                                      ^
+                                      |
+                                      v
+                            +---------+---------+
+                            |                   |
+                            | Database Service  |
+                            |                   |
+                            +-------------------+
+```
+
+### Key Features
+
+- **Message-Based Communication**: ZeroMQ (ZMQ) for lightweight, efficient inter-service communication
+- **Publish-Subscribe Pattern**: Services publish data that can be consumed by multiple subscribers
+- **Request-Reply Pattern**: For command-based operations needing acknowledgment
+- **Containerized**: Each service runs in its own Docker container
+- **Configurable**: All connection settings in central configuration files
+- **Scalable**: Each service can be scaled independently
+
+### Running with ZMQ Architecture
+
+```bash
+# Start all services with ZMQ communication
+docker-compose -f docker-compose-zmq.yaml up
+
+# Start a specific service
+docker-compose -f docker-compose-zmq.yaml up dashboard-service
+```
+
+### Local Development with ZMQ
+
+For local development and testing without Docker:
+
+```bash
+# Start the service orchestrator
+python service_orchestrator.py
+
+# Test the database service
+python db_service_test.py
+```
+
+### Configuration
+
+ZMQ settings are defined in `src/config/config.yaml` under the `zmq` section:
+
+- Ports for each service
+- Topic names for different message types
+- Host configurations for local and Docker deployments
+
+For more details, see [ZMQ Communication Documentation](docs/zmq_communication.md).
 
 ## 🔄 Model Version Control with DVC
 

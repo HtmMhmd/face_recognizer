@@ -1,9 +1,15 @@
 import cv2
 import os
 import json
+import logging
 from datetime import datetime
 
 from src.services.image_processor import ImageProcessor
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, 
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("Image_Service")
 
 def process_image(detector_type='mediapipe', image_path=None, output_path=None, 
                  show_gui=False, verbose=False):
@@ -18,10 +24,10 @@ def process_image(detector_type='mediapipe', image_path=None, output_path=None,
         verbose (bool): Enable verbose output
     """
     if not image_path or not os.path.exists(image_path):
-        print(f"[ERROR] Input image not found: {image_path}")
+        logger.error(f"Input image not found: {image_path}")
         return
     
-    print(f"[INFO] Processing image: {image_path}")
+    logger.info(f"Processing image: {image_path}")
     
     # Initialize image processor
     image_processor = ImageProcessor(model_architecture=detector_type, verbose=verbose)

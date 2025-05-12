@@ -41,7 +41,7 @@ class MediapipeFaceDetector(FaceDetector):
             for i, detection in enumerate(results.detections):
                 
                 bboxC = detection.location_data.relative_bounding_box
-                ih, iw, _ = image.shape
+                ih, iw = image.shape[0], image.shape[1]
                 
                 bbox = int(bboxC.xmin * iw), int(bboxC.ymin * ih), \
                        int(bboxC.width * iw), int(bboxC.height * ih)

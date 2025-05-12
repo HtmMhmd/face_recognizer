@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+        }
+        .panel {
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .panel-title {
+            margin-top: 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            color: #2c3e50;
+        }
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+        }
+        .face-card {
+            background-color: white;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .face-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .face-card-details {
+            padding: 10px;
+            text-align: center;
+        }
+        .face-card h3 {
+            margin: 0;
+            font-size: 16px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .face-card p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .verified {
+            color: #27ae60;
+        }
+        .not-verified {
+            color: #e74c3c;
+        }
+        .button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .button-danger {
+            background-color: #e74c3c;
+        }
+        .button-danger:hover {
+            background-color: #c0392b;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row > * {
+            flex: 1;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        #imagePreviews {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .image-preview {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 2px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Face Recognition Dashboard</h1>
+            <span id="status-indicator">Status: System Ready</span>
+        </div>
+        
+        <div class="panel">
+            <h2 class="panel-title">Controls</h2>
+            <div class="button-group">
+                <button class="button" onclick="captureImage('front')">Capture Front</button>
+                <button class="button" onclick="captureImage('left')">Capture Left</button>
+                <button class="button" onclick="captureImage('right')">Capture Right</button>
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2 class="panel-title">Face Recognition Results</h2>
+            <div id="results-container" class="card-grid">
+                <!-- Face recognition results will be displayed here -->
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2 class="panel-title">Add New User</h2>
+            <div id="status-message"></div>
+            <form id="addUserForm" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div>
+                        <div class="form-group">
+                            <label for="userName">User Name</label>
+                            <input type="text" id="userName" name="user_name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password (Optional)</label>
+                            <input type="password" id="password" name="password">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="faceImages">Face Images</label>
+                            <input type="file" id="faceImages" name="face_image" accept="image/*" multiple required onchange="previewImages()">
+                        </div>
+                        
+                        <div id="imagePreviews"></div>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button class="button" type="submit">Add User</button>
+                    <button class="button button-danger" type="reset">Reset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Function to capture an image from the camera
+        function captureImage(direction) {
+            fetch(`/api/capture/${direction}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateStatus(`${data.message}`);
+                    setTimeout(fetchLatestData, 2000); // Fetch updated data after 2 seconds
+                })
+                .catch(error => {
+                    console.error('Error capturing image:', error);
+                    updateStatus('Error capturing image', 'error');
+                });
+        }
+        
+        // Function to fetch the latest faces and recognition results
+        function fetchLatestData() {
+            // Fetch the latest cropped faces
+            fetch('/api/latest_faces')
+                .then(response => response.json())
+                .then(faces => {
+                    // Fetch the latest recognition results
+                    fetch('/api/latest_results')
+                        .then(response => response.json())
+                        .then(results => {
+                            updateResultsDisplay(faces, results);
+                        });
+                })
+                .catch(error => {
+                    console.error('Error fetching latest data:', error);
+                });
+        }
+        
+        // Function to update the results display
+        function updateResultsDisplay(faces, results) {
+            const resultsContainer = document.getElementById('results-container');
+            resultsContainer.innerHTML = '';
+            
+            // Combine faces and results
+            for (const faceId in faces) {
+                const faceImage = faces[faceId];
+                const result = results[faceId] || { 
+                    user_name: 'Unknown', 
+                    verified: false, 
+                    confidence: 0,
+                    date_time: new Date().toLocaleString() 
+                };
+                
+                // Create card element
+                const card = document.createElement('div');
+                card.className = 'face-card';
+                
+                // Add face image
+                const img = document.createElement('img');
+                img.src = `data:image/jpeg;base64,${faceImage}`;
+                card.appendChild(img);
+                
+                // Add details
+                const details = document.createElement('div');
+                details.className = 'face-card-details';
+                
+                const name = document.createElement('h3');
+                name.textContent = result.user_name;
+                details.appendChild(name);
+                
+                const status = document.createElement('p');
+                status.className = result.verified ? 'verified' : 'not-verified';
+                status.textContent = result.verified ? 'Verified' : 'Not Verified';
+                details.appendChild(status);
+                
+                const confidence = document.createElement('p');
+                confidence.textContent = `Confidence: ${Math.round(result.confidence * 100)}%`;
+                details.appendChild(confidence);
+                
+                const timestamp = document.createElement('p');
+                timestamp.textContent = result.date_time;
+                details.appendChild(timestamp);
+                
+                card.appendChild(details);
+                resultsContainer.appendChild(card);
+            }
+            
+            if (Object.keys(faces).length === 0) {
+                resultsContainer.innerHTML = '<p>No faces detected yet.</p>';
+            }
+        }
+        
+        // Function to preview selected images
+        function previewImages() {
+            const preview = document.getElementById('imagePreviews');
+            preview.innerHTML = '';
+            const files = document.getElementById('faceImages').files;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.className = 'image-preview';
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Function to update status message
+        function updateStatus(message, type = 'success') {
+            const statusIndicator = document.getElementById('status-indicator');
+            statusIndicator.textContent = `Status: ${message}`;
+            
+            const statusMessage = document.getElementById('status-message');
+            statusMessage.className = `status ${type}`;
+            statusMessage.textContent = message;
+            
+            // Clear the message after 5 seconds
+            setTimeout(() => {
+                statusMessage.className = '';
+                statusMessage.textContent = '';
+            }, 5000);
+        }
+        
+        // Add event listener for form submission
+        document.getElementById('addUserForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('/api/add_user', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updateStatus(data.message, 'success');
+                    this.reset();
+                    document.getElementById('imagePreviews').innerHTML = '';
+                } else {
+                    updateStatus(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error adding user:', error);
+                updateStatus('Error adding user', 'error');
+            });
+        });
+        
+        // Fetch latest data every 5 seconds
+        setInterval(fetchLatestData, 5000);
+        
+        // Initial fetch
+        fetchLatestData();
+    </script>
+</body>
+</html>

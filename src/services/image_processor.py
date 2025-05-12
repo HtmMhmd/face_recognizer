@@ -1,5 +1,9 @@
 from typing import List, Tuple
 import numpy as np
+import logging
+
+# Configure logging
+logger = logging.getLogger("Image_Processor")
 
 class ImageProcessor:
     def __init__(self, model_architecture='mediapipe', verbose=False, detection_embedding=None):
@@ -23,12 +27,13 @@ class ImageProcessor:
         self.detection_embedding = DetectionEmbedding()
         self.landmarks = None
 
-    def process_image(self, image):
+    def process_image(self, image, filter_largest=True):
         """
         Processes the input image to detect faces and extract embeddings.
 
         Args:
             image (np.ndarray): The input image.
+            filter_largest (bool): If True, only the largest face will be processed.
 
         Returns:
             DetectionEmbedding: The detection results containing bounding boxes, scores, class IDs, cropped faces, and embeddings.
@@ -37,17 +42,23 @@ class ImageProcessor:
         
         detection_faces = self.detector.detect(image)
         
+        # Filter to keep only the largest face if multiple faces are detected
+        # This is useful for login/authentication scenarios where we only want to process the most prominent face
+        if filter_largest and len(detection_faces.boxes) > 1:
+            logger.info(f"Multiple faces detected ({len(detection_faces.boxes)}). Filtering to largest face.")
+            detection_faces = self.detector.filter_largest_face(detection_faces)
+        
         embeddings = []
         for i, cropped_face in enumerate(detection_faces.cropped_faces):
             try:
                 if cropped_face is None or cropped_face.size == 0:
-                    print(f"Warning: Invalid cropped face at index {i}")
+                    logger.warning(f"Invalid cropped face at index {i}")
                     continue
                     
                 embedding = self.facenet.forward(preprocess_image(cropped_face))
                 embeddings.append(embedding)
             except Exception as e:
-                print(f"Error processing face {i}: {str(e)}")
+                logger.error(f"Error processing face {i}: {str(e)}")
                 # Skip this face and continue with others
                 continue
                 
@@ -107,7 +118,7 @@ class ImageProcessor:
                         'verification_result': verification_result
                     })
                     if self.verbose:
-                        print(f"Face verified as user: {user_name}")
+                        logger.info(f"Face verified as user: {user_name}")
         return results
 
     def align_faces(self, image):
@@ -161,3 +172,28 @@ class ImageProcessor:
         """
         from src.utils.image.drawing import draw_user_names_on_bboxes
         return draw_user_names_on_bboxes(image, results)
+
+    # filter_largest_face method has been moved to detection_faces.py
+
+    def get_gaze_direction(self, detection_result=None):
+        """
+        Gets the gaze direction of the detected face based on nose and eye positions.
+        
+        Args:
+            detection_result (DetectionEmbedding, optional): Detection results to use.
+                If None, uses the current detection results.
+        
+        Returns:
+            dict: Gaze direction information including:
+                'direction': 'left', 'right', 'center', or 'unknown'
+                'left_eye_nose_dist': distance from left eye to nose
+                'right_eye_nose_dist': distance from right eye to nose
+                'ratio': ratio between the two distances
+        """
+        # If detection_result is provided, update the detector's landmarks
+        if detection_result is not None:
+            # The detection result is ignored - we use the last detected landmarks
+            # This parameter is kept for API compatibility
+            pass
+            
+        return self.detector.get_gaze_direction()

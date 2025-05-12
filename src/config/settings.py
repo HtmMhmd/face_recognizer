@@ -42,6 +42,7 @@ class Settings:
         self.alignment = self._get_section("alignment")
         self.image = self._get_section("image")
         self.output = self._get_section("output")
+        self.zmq = self._get_section("zmq")
         
     def _load_config(self) -> Dict[str, Any]:
         """Load the configuration from the YAML file."""

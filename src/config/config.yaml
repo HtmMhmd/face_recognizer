@@ -100,6 +100,54 @@ database:
   service:
     host: "db_service"
     port: 5000
+
+# ZeroMQ (ZMQ) communication settings
+zmq:
+  # Default ports for different message types
+  ports:
+    capture: 5555
+    image: 5556
+    cropped_face: 5557
+    recognition: 5558
+    add_user: 5559
+    add_user_response: 5560
+    db_request: 5561
+    db_response: 5562
+  
+  # Host configuration for different deployment scenarios
+  hosts:
+    local: "localhost"
+    docker:
+      # Service names for Docker networking
+      capture_service: "capture-service"
+      image_processing_service: "image-processing-service"
+      recognition_service: "recognition-service"
+      dashboard_service: "dashboard-service"
+      db_service: "db-service"
+    
+    # Use this for Mac/Windows Docker to communicate with host
+    docker_host: "host.docker.internal"
+  
+  # Topics for ZMQ communication
+  topics:
+    capture: "Capture"
+    image: "Image"
+    cropped_face: "CroppedFace"
+    recognition_result: "RecognitionResult"
+    add_user_request: "AddUserRequest"
+    add_user_response: "AddUserResponse"
+    verify_user_request: "VerifyUserRequest"
+    verify_user_response: "VerifyUserResponse"
+    db_request: "DBRequest"
+    db_response: "DBResponse"
+    status_update: "StatusUpdate"
+  
+  # Commands for capture service
+  commands:
+    take_front: "take_front"
+    take_left: "take_left"
+    take_right: "take_right"
+    port: 5000
     api_key: ""
     use_remote: false
 
