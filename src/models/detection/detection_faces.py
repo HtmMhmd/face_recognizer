@@ -81,7 +81,10 @@ class DetectionFaces(DetectionResult):
             # Keep only the largest face
             self.boxes = [self.boxes[largest_idx]] if largest_idx < len(self.boxes) else []
             self.scores = [self.scores[largest_idx]] if largest_idx < len(self.scores) else []
-            self.classes = [self.classes[largest_idx]] if largest_idx < len(self.classes) else []
+            if largest_idx < len(self.classes) :
+                self.classes = [self.classes[largest_idx]]
+            else :
+                pass
             self.cropped_faces = [self.cropped_faces[largest_idx]] if largest_idx < len(self.cropped_faces) else []
         
         return self

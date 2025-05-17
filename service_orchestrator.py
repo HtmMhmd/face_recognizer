@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 import argparse
+import logging
+import os
+import sys
 import subprocess
 import time
 import signal
-import sys
-import os
-import logging
-from threading import Thread
+import atexit
 from src.config.settings import Settings
-from src.utils.zmq_utils import ZmqConfig
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, 
@@ -16,231 +15,230 @@ logging.basicConfig(level=logging.INFO,
 logger = logging.getLogger("Service_Orchestrator")
 
 class ServiceOrchestrator:
-    """Orchestrates the face recognition system services."""
-    
-    def __init__(self, use_docker=False):
-        """Initialize the service orchestrator.
+    """
+    Orchestrates the deployment and management of all face recognition system services.
+    """
+    def __init__(self, deployment_mode="local", use_docker=False):
+        """
+        Initialize the service orchestrator.
         
         Args:
-            use_docker (bool): Whether to use Docker for services
+            deployment_mode (str): Deployment mode ('local' or 'docker')
+            use_docker (bool): Legacy parameter. If True, sets deployment_mode to "docker"
         """
-        # Load application settings
+        # Support legacy parameter
+        if use_docker:
+            deployment_mode = "docker"
         self.settings = Settings()
-        
-        self.use_docker = use_docker
+        self.deployment_mode = deployment_mode
         self.processes = {}
-        self.running = True
-        self.deployment_mode = "docker" if use_docker else "local"
         
-        # Use configuration for ports
-        self.ports = {
-            'capture': ZmqConfig.get_port("capture", 5555),
-            'image': ZmqConfig.get_port("image", 5556),
-            'cropped_face': ZmqConfig.get_port("cropped_face", 5557),
-            'recognition': ZmqConfig.get_port("recognition", 5558),
-            'add_user': ZmqConfig.get_port("add_user", 5559),
-            'add_user_response': ZmqConfig.get_port("add_user_response", 5560),
-            'db_request': ZmqConfig.get_port("db_request", 5561),
-            'db_response': ZmqConfig.get_port("db_response", 5562),
-            'dashboard': self.settings.api.get("port", 8080)
-        }
+        # Register cleanup handler
+        atexit.register(self.cleanup)
+        signal.signal(signal.SIGINT, self._signal_handler)
+        signal.signal(signal.SIGTERM, self._signal_handler)
         
-        # Host configuration
-        self.dashboard_host = self.settings.api.get("host", "0.0.0.0")
+    def _signal_handler(self, sig, frame):
+        """Handle termination signals."""
+        logger.info(f"Received signal {sig}, shutting down services...")
+        self.cleanup()
+        sys.exit(0)
         
-        # Default host configuration based on deployment mode
-        if self.use_docker:
-            # Get Docker host configuration
-            self.zmq_host = self.settings.zmq.get("hosts", {}).get("docker_host", "host.docker.internal")
+    def start_service(self, service_name, command, env=None):
+        """Start a service process."""
+        if service_name in self.processes and self.processes[service_name].poll() is None:
+            logger.warning(f"Service {service_name} is already running.")
+            return
+            
+        logger.info(f"Starting {service_name}...")
+        if env:
+            env_vars = os.environ.copy()
+            env_vars.update(env)
         else:
-            self.zmq_host = self.settings.zmq.get("hosts", {}).get("local", "localhost")
+            env_vars = os.environ.copy()
             
-        logger.info(f"Service Orchestrator initialized with mode: {self.deployment_mode}")
-        logger.info(f"ZMQ Host: {self.zmq_host}")
-        logger.info(f"Dashboard Host: {self.dashboard_host}, Port: {self.ports['dashboard']}")
-    
-    def _run_command(self, name, command):
-        """Run a command in a subprocess.
+        process = subprocess.Popen(
+            command,
+            env=env_vars,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            bufsize=1
+        )
         
-        Args:
-            name (str): Name of the service
-            command (list): Command to run as list of arguments
-        """
+        self.processes[service_name] = process
+        logger.info(f"{service_name} started with PID {process.pid}")
+        
+        # Start logger threads
+        self._start_log_threads(service_name, process)
+        
+    def _start_log_threads(self, service_name, process):
+        """Start threads to capture and log stdout/stderr from services."""
+        import threading
+        
+        def log_output(stream, log_prefix):
+            for line in stream:
+                logger.info(f"{log_prefix}: {line.strip()}")
+                
+        threading.Thread(
+            target=log_output,
+            args=(process.stdout, f"{service_name}-STDOUT"),
+            daemon=True
+        ).start()
+        
+        threading.Thread(
+            target=log_output,
+            args=(process.stderr, f"{service_name}-STDERR"),
+            daemon=True
+        ).start()
+        
+    def deploy_local(self):
+        """Deploy services locally as separate processes."""
+        logger.info("Deploying services locally...")
+        
+        # Start Database Service
+        self.start_service(
+            "db_service",
+            ["python", "-m", "src.services.database_service", 
+             "--db-request-port", "5561", 
+             "--db-response-port", "5562"]
+        )
+        time.sleep(2)  # Wait for database service to initialize
+        
+        # Start Dashboard Service 
+        self.start_service(
+            "dashboard_service",
+            ["python", "-m", "src.services.dashboard_service", 
+             "--capture-port", "5555",
+             "--cropped-face-port", "5557",
+             "--recognition-port", "5558",
+             "--add-user-port", "5559",
+             "--add-user-response-port", "5560",
+             "--host", "localhost",
+             "--dashboard-host", "0.0.0.0",
+             "--dashboard-port", "8080"]
+        )
+        time.sleep(1)
+        
+        # Start Capture Service
+        self.start_service(
+            "capture_service",
+            ["python", "-m", "src.services.capture_service", 
+             "--capture-port", "5555", 
+             "--image-port", "5556", 
+             "--host", "localhost"]
+        )
+        time.sleep(1)
+        
+        # Start Image Processing Service
+        self.start_service(
+            "image_processing_service",
+            ["python", "-m", "src.services.image_processing_service",
+             "--image-port", "5556",
+             "--cropped-face-port", "5557",
+             "--host", "localhost",
+             "--detector", "mediapipe"]
+        )
+        time.sleep(1)
+        
+        # Start Recognition Service
+        self.start_service(
+            "recognition_service",
+            ["python", "-m", "src.services.recognition_service",
+             "--cropped-face-port", "5557",
+             "--recognition-port", "5558",
+             "--add-user-port", "5559",
+             "--add-user-response-port", "5560",
+             "--host", "localhost"]
+        )
+        
+        logger.info("All services deployed locally!")
+        logger.info("Dashboard available at: http://localhost:8080")
+        
+    def deploy_docker(self):
+        """Deploy services using Docker Compose."""
+        logger.info("Deploying services with Docker Compose...")
+        
+        # Run docker-compose
         try:
-            logger.info(f"Starting {name} service: {' '.join(command)}")
-            
-            # Start process and register for cleanup
-            process = subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE, 
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1
+            subprocess.run(
+                ["docker-compose", "-f", "docker-compose-enhanced.yaml", "up", "-d"],
+                check=True
             )
+            logger.info("Docker Compose services started successfully!")
+            logger.info("Dashboard available at: http://localhost:8080")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to start Docker Compose services: {e}")
+            sys.exit(1)
             
-            self.processes[name] = process
-            
-            # Start thread to read and log output
-            def log_output():
-                for line in iter(process.stdout.readline, ''):
-                    if self.running:
-                        logger.info(f"[{name}] {line.rstrip()}")
-                    else:
-                        break
-            
-            Thread(target=log_output, daemon=True).start()
-            
-            return process
-            
-        except Exception as e:
-            logger.error(f"Error starting {name} service: {e}")
-            return None
-    
-    def start_capture_service(self):
-        """Start the Capture Service."""
-        command = [
-            "python", "-m", "src.services.capture_service",
-            "--capture-port", str(self.ports['capture']),
-            "--image-port", str(self.ports['image']),
-            "--host", self.zmq_host,
-            "--deployment-mode", self.deployment_mode
-        ]
+    def check_service_status(self):
+        """Check status of all running services."""
+        if self.deployment_mode == "docker":
+            # Check docker services
+            try:
+                result = subprocess.run(
+                    ["docker-compose", "-f", "docker-compose-enhanced.yaml", "ps"],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    universal_newlines=True
+                )
+                logger.info("Docker services status:")
+                logger.info("\n" + result.stdout)
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to check Docker services status: {e}")
+        else:
+            # Check local processes
+            for name, process in self.processes.items():
+                status = "RUNNING" if process.poll() is None else f"STOPPED (exit code {process.poll()})"
+                logger.info(f"{name}: {status}")
+                
+    def cleanup(self):
+        """Clean up all running services."""
+        logger.info("Cleaning up services...")
         
-        return self._run_command("capture", command)
-    
-    def start_image_processing_service(self):
-        """Start the Image Processing Service."""
-        command = [
-            "python", "-m", "src.services.image_processing_service",
-            "--image-port", str(self.ports['image']),
-            "--cropped-face-port", str(self.ports['cropped_face']),
-            "--host", self.zmq_host,
-            "--detector", self.settings.detection.get("default_model", "mediapipe"),
-            "--deployment-mode", self.deployment_mode
-        ]
-        
-        return self._run_command("image_processing", command)
-    
-    def start_recognition_service(self):
-        """Start the Recognition Service."""
-        command = [
-            "python", "-m", "src.services.recognition_service",
-            "--cropped-face-port", str(self.ports['cropped_face']),
-            "--recognition-port", str(self.ports['recognition']),
-            "--add-user-port", str(self.ports['add_user']),
-            "--add-user-response-port", str(self.ports['add_user_response']),
-            "--host", self.zmq_host,
-            "--deployment-mode", self.deployment_mode
-        ]
-        
-        return self._run_command("recognition", command)
-    
-    def start_dashboard_service(self):
-        """Start the Dashboard Service."""
-        command = [
-            "python", "-m", "src.services.dashboard_service",
-            "--capture-port", str(self.ports['capture']),
-            "--cropped-face-port", str(self.ports['cropped_face']),
-            "--recognition-port", str(self.ports['recognition']),
-            "--add-user-port", str(self.ports['add_user']),
-            "--add-user-response-port", str(self.ports['add_user_response']),
-            "--host", self.zmq_host,
-            "--dashboard-host", self.dashboard_host,
-            "--dashboard-port", str(self.ports['dashboard']),
-            "--deployment-mode", self.deployment_mode
-        ]
-        
-        return self._run_command("dashboard", command)
-    
-    def start_database_service(self):
-        """Start the Database Service."""
-        command = [
-            "python", "-m", "src.services.database_service",
-            "--db-request-port", str(self.ports['db_request']),
-            "--db-response-port", str(self.ports['db_response']),
-            "--deployment-mode", self.deployment_mode
-        ]
-        
-        return self._run_command("database", command)
-    
-    def start_all_services(self):
-        """Start all services in the correct order."""
-        logger.info("Starting all services...")
-        
-        # Start database service first since other services depend on it
-        self.start_database_service()
-        time.sleep(1)
-        
-        # Start services in sequence with small delay between them
-        self.start_capture_service()
-        time.sleep(1)
-        
-        self.start_image_processing_service()
-        time.sleep(1)
-        
-        self.start_recognition_service()
-        time.sleep(1)
-        
-        self.start_dashboard_service()
-        
-        logger.info("All services started")
-    
-    def stop_all_services(self):
-        """Stop all running services."""
-        logger.info("Stopping all services...")
-        self.running = False
-        
-        for name, process in self.processes.items():
-            if process.poll() is None:  # Process is still running
-                logger.info(f"Stopping {name} service...")
-                process.terminate()
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    logger.warning(f"Killing {name} service that didn't terminate")
-                    process.kill()
-        
-        self.processes = {}
-        logger.info("All services stopped")
-    
-    def wait_for_completion(self):
-        """Wait for all processes to complete or for user interrupt."""
-        try:
-            # Wait for any process to finish or for user interrupt
-            while self.running and any(p.poll() is None for p in self.processes.values()):
-                time.sleep(1)
-        except KeyboardInterrupt:
-            logger.info("Received interrupt signal")
-        finally:
-            self.stop_all_services()
+        if self.deployment_mode == "docker":
+            # Stop docker services
+            try:
+                subprocess.run(
+                    ["docker-compose", "-f", "docker-compose-enhanced.yaml", "down"],
+                    check=True
+                )
+                logger.info("Docker Compose services stopped successfully!")
+            except subprocess.CalledProcessError as e:
+                logger.error(f"Failed to stop Docker Compose services: {e}")
+        else:
+            # Terminate local processes
+            for name, process in self.processes.items():
+                if process.poll() is None:  # Process is still running
+                    logger.info(f"Terminating {name}...")
+                    process.terminate()
+                    try:
+                        process.wait(timeout=5)
+                        logger.info(f"{name} terminated")
+                    except subprocess.TimeoutExpired:
+                        logger.warning(f"{name} did not terminate gracefully, killing...")
+                        process.kill()
 
 def main():
-    parser = argparse.ArgumentParser(description="Face Recognition System Orchestrator")
-    parser.add_argument("--docker", action="store_true", default=False,
-                      help="Use Docker for services")
+    parser = argparse.ArgumentParser(description="Face Recognition System Service Orchestrator")
+    parser.add_argument("--mode", choices=["local", "docker"], default="local",
+                        help="Deployment mode: local (separate processes) or docker (containers)")
+    parser.add_argument("--action", choices=["start", "stop", "status"], default="start",
+                        help="Action to perform: start, stop, or check status")
     
     args = parser.parse_args()
     
-    # Register signal handlers
-    def signal_handler(sig, frame):
-        logger.info(f"Received signal {sig}, shutting down...")
-        orchestrator.stop_all_services()
-        sys.exit(0)
+    orchestrator = ServiceOrchestrator(deployment_mode=args.mode)
     
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-    
-    # Start orchestrator
-    orchestrator = ServiceOrchestrator(use_docker=args.docker)
-    
-    try:
-        orchestrator.start_all_services()
-        logger.info(f"Dashboard UI available at http://localhost:{orchestrator.ports['dashboard']}")
-        orchestrator.wait_for_completion()
-    except Exception as e:
-        logger.error(f"Error in orchestrator: {e}")
-    finally:
-        orchestrator.stop_all_services()
+    if args.action == "start":
+        if args.mode == "docker":
+            orchestrator.deploy_docker()
+        else:
+            orchestrator.deploy_local()
+    elif args.action == "stop":
+        orchestrator.cleanup()
+    elif args.action == "status":
+        orchestrator.check_service_status()
 
 if __name__ == "__main__":
     main()

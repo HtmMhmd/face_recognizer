@@ -231,77 +231,96 @@ Each can be started individually:
 docker-compose up face_recognizer
 ```
 
-## 🔄 ZMQ Microservices Architecture
+## 🔄 Microservices Architecture
 
-The system includes a ZMQ-based microservices architecture for more scalable and flexible deployment options.
+The system is built around a microservices architecture with the following components:
 
-### Architecture Overview
+### Core Services
 
-```
-+---------------+      +----------------------+      +--------------------+
-|               |      |                      |      |                    |
-| Capture       +----->+ Image Processing     +----->+ Recognition        |
-| Service       |      | Service              |      | Service            |
-|               |      |                      |      |                    |
-+-------+-------+      +----------+-----------+      +---------+----------+
-        ^                         ^                            ^
-        |                         |                            |
-        |                         |                            |
-+-------+-------------------------+----------------------------+----------+
-|                                                                         |
-|                          Dashboard Service                              |
-|                                                                         |
-+-------------------------------------+-----------------------------------+
-                                      ^
-                                      |
-                                      v
-                            +---------+---------+
-                            |                   |
-                            | Database Service  |
-                            |                   |
-                            +-------------------+
-```
+1. **Dashboard Service**
+   - Provides the user interface for adding and verifying users
+   - Sends ZMQ messages to trigger "Add User" and "Verify User" processes
+   - Receives ZMQ messages with cropped faces and recognition results
 
-### Key Features
+2. **Capture Service**
+   - Captures images from camera streams
+   - Subscribes to "Capture" ZMQ topic for commands
+   - Publishes captured images to "Image" ZMQ topic
 
-- **Message-Based Communication**: ZeroMQ (ZMQ) for lightweight, efficient inter-service communication
-- **Publish-Subscribe Pattern**: Services publish data that can be consumed by multiple subscribers
-- **Request-Reply Pattern**: For command-based operations needing acknowledgment
-- **Containerized**: Each service runs in its own Docker container
-- **Configurable**: All connection settings in central configuration files
-- **Scalable**: Each service can be scaled independently
+3. **Image Processing Service**
+   - Detects and crops faces from images
+   - Subscribes to "Image" ZMQ topic
+   - Publishes cropped faces to "CroppedFace" ZMQ topic
 
-### Running with ZMQ Architecture
+4. **Recognition Service**
+   - Performs face recognition using deep learning models
+   - Subscribes to "CroppedFace" ZMQ topic
+   - Publishes recognition results to "RecognitionResult" ZMQ topic
 
-```bash
-# Start all services with ZMQ communication
-docker-compose -f docker-compose-zmq.yaml up
+5. **Database Service**
+   - Stores user information and face templates
+   - Provides an API for user management operations
 
-# Start a specific service
-docker-compose -f docker-compose-zmq.yaml up dashboard-service
-```
+### ZMQ Communication Topics
 
-### Local Development with ZMQ
+- **Capture**: Dashboard → Capture Service (commands)
+- **Image**: Capture Service → Image Processing Service (raw images)
+- **CroppedFace**: Image Processing Service → Recognition Service (cropped faces)
+- **RecognitionResult**: Recognition Service → Dashboard (verification results)
+- **AddUserRequest**: Dashboard → Recognition Service (add user commands)
+- **AddUserResponse**: Recognition Service → Dashboard (add user status)
 
-For local development and testing without Docker:
+## 🚀 Running the System
+
+You can run the entire face recognition system with a single command, either in local mode or Docker mode:
+
+### Local Mode (Separate Processes)
 
 ```bash
-# Start the service orchestrator
-python service_orchestrator.py
-
-# Test the database service
-python db_service_test.py
+python run_face_recognition_system.py --mode local --simulator dashboard
 ```
 
-### Configuration
+### Docker Mode (Containerized Services)
 
-ZMQ settings are defined in `src/config/config.yaml` under the `zmq` section:
+```bash
+python run_face_recognition_system.py --mode docker
+```
 
-- Ports for each service
-- Topic names for different message types
-- Host configurations for local and Docker deployments
+### Additional Options
 
-For more details, see [ZMQ Communication Documentation](docs/zmq_communication.md).
+- `--simulator [dashboard|simulation]`: Choose simulator mode (default: dashboard)
+- `--detector [mediapipe|yolov8|yolov8_onnx]`: Choose face detector model (default: mediapipe)
+- `--disable-face-filtering`: Process all detected faces instead of just the largest
+- `--disable-gaze-detection`: Turn off gaze direction detection
+
+## 🖥️ Dashboard Simulation
+
+The dashboard simulation provides an interactive menu to test the system:
+
+1. **Add New User**: Register a new user with front, left, and right face images
+2. **Verify User**: Verify an existing user's identity
+3. **Take Front Face**: Capture a front-facing image
+4. **Take Left Face**: Capture a left-profile image
+5. **Take Right Face**: Capture a right-profile image
+6. **Image Simulation Mode**: Switch to automatic image simulation
+
+## 🔧 Service Orchestration
+
+The `service_orchestrator.py` script manages starting and stopping all services. You can run it directly:
+
+```bash
+# Start services in local mode
+python service_orchestrator.py --mode local --action start
+
+# Start services in Docker mode
+python service_orchestrator.py --mode docker --action start
+
+# Check service status
+python service_orchestrator.py --mode local --action status
+
+# Stop services
+python service_orchestrator.py --mode local --action stop
+```
 
 ## 🔄 Model Version Control with DVC
 

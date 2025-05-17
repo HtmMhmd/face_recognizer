@@ -174,7 +174,7 @@ class FaceMeshDetector:
         # Determine gaze direction based on the difference in distances
         # When looking left, distance to right eye increases
         # When looking right, distance to left eye increases
-        threshold = 0.08  # Threshold to determine if looking left/right or center
+        threshold = 0.2  # Threshold to determine if looking left/right or center
         ratio = left_eye_nose_dist / max(right_eye_nose_dist, 0.1)  # Prevent division by zero
         
         if ratio > 1 + threshold:
