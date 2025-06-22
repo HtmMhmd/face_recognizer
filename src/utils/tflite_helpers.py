@@ -142,29 +142,14 @@ def get_output_details(interpreter) -> List[Dict[str, Any]]:
         logger.error(f"Failed to get output details: {e}")
         return []
 
-
 def run_inference(interpreter, 
                  input_data: np.ndarray, 
                  input_index: int = 0,
                  output_index: int = 0,
                  profile: bool = False) -> Tuple[Optional[np.ndarray], float]:
     """
-    Run inference with the given interpreter and input data.
-    
-    Args:
-        interpreter: TFLite interpreter
-        input_data: Input data as numpy array
-        input_index: Index of the input tensor
-        output_index: Index of the output tensor
-        profile: Whether to profile and log inference time
-        
-    Returns:
-        Tuple of (output tensor data, inference time in ms)
+    Run inference on a TFLite model with optimized settings.
     """
-    if interpreter is None:
-        logger.error("Cannot run inference: interpreter is None")
-        return None, 0.0
-        
     try:
         # Get input and output details
         input_details = interpreter.get_input_details()
@@ -183,27 +168,18 @@ def run_inference(interpreter,
         input_shape = input_details[input_index]['shape']
         input_dtype = input_details[input_index]['dtype']
         
-        # Check and prepare input
-        if input_data.shape != input_shape and input_data.shape != tuple(input_shape):
-            # Try to reshape if the total size matches
-            if input_data.size == np.prod(input_shape):
-                logger.warning(f"Reshaping input from {input_data.shape} to {input_shape}")
-                input_data = input_data.reshape(input_shape)
-            else:
-                logger.error(f"Input shape mismatch: got {input_data.shape}, expected {input_shape}")
-                return None, 0.0
+        # # Check and prepare input
+        # if input_data.shape != input_shape and input_data.shape != tuple(input_shape):
+        #     # Try to reshape if the total size matches
+        #     if input_data.size == np.prod(input_shape):
+        #         logger.warning(f"Reshaping input from {input_data.shape} to {input_shape}")
+        #         input_data = input_data.reshape(input_shape)
+        #     else:
+        #         logger.error(f"Input shape mismatch: got {input_data.shape}, expected {input_shape}")
+        #         return None, 0.0
         
-        # Handle quantization if needed
-        is_quantized = input_details[input_index].get('quantization', (0, 0)) != (0, 0)
-        if is_quantized:
-            scale, zero_point = input_details[input_index]['quantization']
-            if scale != 0:
-                logger.debug("Quantizing input data")
-                input_data = input_data / scale + zero_point
-                input_data = input_data.astype(input_dtype)
-        
-        # Set input tensor
-        interpreter.set_tensor(input_details[input_index]['index'], input_data)
+        # Set input tensor (skip quantization for simplicity and reliability)
+        interpreter.set_tensor(input_details[input_index]['index'], input_data.astype(input_dtype))
         
         # Run inference
         start_time = time.time()
@@ -214,14 +190,6 @@ def run_inference(interpreter,
         # Get output tensor
         output_data = interpreter.get_tensor(output_details[output_index]['index'])
         
-        # Handle dequantization if needed
-        is_quantized = output_details[output_index].get('quantization', (0, 0)) != (0, 0)
-        if is_quantized:
-            scale, zero_point = output_details[output_index]['quantization']
-            if scale != 0:
-                logger.debug("Dequantizing output data")
-                output_data = (output_data.astype(np.float32) - zero_point) * scale
-        
         if profile:
             logger.info(f"TFLite inference time: {inference_time:.2f}ms")
             
@@ -230,8 +198,6 @@ def run_inference(interpreter,
     except Exception as e:
         logger.error(f"Failed to run inference: {e}")
         return None, 0.0
-
-
 class OptimizedTFLiteModel:
     """
     A wrapper class for TFLite models with optimized inference capabilities.

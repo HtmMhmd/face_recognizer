@@ -7,16 +7,22 @@ from src.models.detection.detection_faces import DetectionFaces
 from src.models.detection.utils import draw_detections, get_cropped_faces
 
 class Yolov8OnnxRuntimeDetector(FaceDetector):
-    def __init__(self, model_path="models/yolov8n_face.onnx", verbose=False, detection_faces=None):
+    def __init__(self, model_path="models/yolov8n_face.onnx", conf_threshold=0.5, iou_threshold=0.45, 
+                 input_shape=(640, 640), verbose=False, detection_faces=None):
         """
         Initializes the Yolov8OnnxRuntimeDetector with the specified model path.
 
         Args:
             model_path (str): The path to the ONNX model file. Defaults to 'models/yolov8n_face.onnx'.
+            conf_threshold (float): Confidence threshold for detections. Defaults to 0.5.
+            iou_threshold (float): IoU threshold for NMS. Defaults to 0.45.
+            input_shape (tuple): Input shape for the model. Defaults to (640, 640).
             verbose (bool): Enables verbose output for debugging. Defaults to False.
             detection_faces (DetectionFaces): Optional DetectionFaces object to store detection results.
         """
         self.model_path = model_path
+        self.conf_threshold = conf_threshold
+        self.iou_threshold = iou_threshold
         self.verbose = verbose
         self.detection_faces = detection_faces if detection_faces is not None else DetectionFaces()
         
@@ -136,8 +142,8 @@ class Yolov8OnnxRuntimeDetector(FaceDetector):
                     class_id = int(detection[5])
                     
                     # Filter by confidence
-                    if confidence > 0.5:  # Confidence threshold
-                        # Convert to pixel coordinates
+                    if confidence >= self.conf_threshold:
+            # Convert to pixel coordinates
                         orig_h, orig_w = image_shape[:2]
                         
                         # Calculate bbox from center, width, height to xmin, ymin, xmax, ymax
@@ -154,8 +160,9 @@ class Yolov8OnnxRuntimeDetector(FaceDetector):
                         x2 = min(orig_w, x2)
                         y2 = min(orig_h, y2)
                         
-                        box = [x1, y1, x2, y2]
-                        results.append([box, confidence, class_id])
+                        if confidence >= self.conf_threshold:
+                            box = [x1, y1, x2, y2]
+                            results.append([box, confidence, class_id])
         
         return results
 

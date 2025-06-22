@@ -7,7 +7,14 @@ class UserDatabase:
     def __init__(self, db_path="/data/face_embeddings.db"):
         self.db_path = db_path
         self.db_dir = os.path.dirname(self.db_path)
-        os.makedirs(self.db_dir, exist_ok=True)
+        # Make sure the directory exists with proper permissions
+        try:
+            os.makedirs(self.db_dir, exist_ok=True)
+        except PermissionError:
+            # If default path has permission issues, use a path in user's home directory
+            home_dir = os.path.expanduser("~")
+            self.db_path = os.path.join(home_dir, "face_embeddings.db")
+            self.db_dir = os.path.dirname(self.db_path)
         self._init_db()
 
     def _init_db(self):
@@ -27,7 +34,7 @@ class UserDatabase:
             print(f"Current permissions: {os.stat(self.db_dir).st_mode}")
             raise
 
-    def add_user(self, username: str, embedding: np.ndarray):
+    def add_or_update_user(self, username: str, embedding: np.ndarray):
         date_added = datetime.now().strftime("%c")
         last_login = date_added
         embedding_blob = embedding
@@ -98,7 +105,7 @@ if __name__ == '__main__':
 
     # Add a user
     embedding = np.array(np.random.rand(512, 1), dtype='float32')
-    db.add_user('test_user', embedding)
+    db.add_or_update_user('test_user', embedding)
     emb = (db.get_all_embeddings())
     for user_name, db_embedding in emb.items():
         print(user_name)
@@ -115,5 +122,6 @@ if __name__ == '__main__':
         print("User not found")
     # Delete the user
     # db.delete_user('hatem')
-    # db.delete_user('test_user')
+    # db.delete_user('test_user')clear
+    
 

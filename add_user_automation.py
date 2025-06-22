@@ -15,6 +15,7 @@ import base64
 import os
 import shutil
 from src.services.image_processor import ImageProcessor
+from src.utils.camera.camera_handler import CameraHandler
 from src.config.settings import Settings
 import json
 
@@ -25,6 +26,8 @@ parser.add_argument("--detector", type=str, default="mediapipe",
 parser.add_argument("--display", action="store_true", default=True,
                     help="Display the video feed with add_user information")
 parser.add_argument("--zmq-server", action="store_false", help="Run as ZMQ add_user server")
+parser.add_argument("--handler", type=str, choices=["threaded", "regular"], default="threaded",
+                    help="Camera handler type: threaded (CameraHandler) or regular (direct OpenCV)")
 args = parser.parse_args()
 
 # Configure logging
@@ -47,11 +50,19 @@ def detect_face_direction(image_processor, frame, direction):
     return add_user_info['direction'] == mapping.get(direction, "")
 
 
-def publish_and_wait_zmq(socket_pub, socket_rep, cap, image_processor, view_name, capture_command, save_path):
+def publish_and_wait_zmq(socket_pub, socket_rep, camera, image_processor, view_name, capture_command, save_path):
     logger.info(f"[{view_name}] Waiting for '{capture_command}'...")
     frame_count = 0
     while True:
-        ret, frame = cap.read()
+        # Fix camera read method based on camera type
+        if isinstance(camera, CameraHandler):
+            # CameraHandler returns (timestamp, frame)
+            timestamp, frame = camera.read()
+            ret = frame is not None
+        else:
+            # OpenCV returns (ret, frame)
+            ret, frame = camera.read()
+            
         if not ret:
             continue
         frame_count += 1
@@ -125,9 +136,24 @@ def zmq_add_user_server():
     socket_pub.bind("tcp://*:5544")
     logger.info("PUB socket bound at tcp://*:5544")
 
-    cap = cv2.VideoCapture(0)
-    if not cap.isOpened():
-        logger.error("Camera failed to open.")
+    # Initialize camera based on handler type
+    camera = None
+    try:
+        if args.handler == "threaded":
+            logger.info("Using threaded camera handler")
+            camera = CameraHandler(args.camera)
+            # No need to call start() as it's not part of the CameraHandler API
+            camera_opened = True  # Assume it's opened successfully unless an exception is raised
+        else:
+            logger.info("Using regular OpenCV camera")
+            camera = cv2.VideoCapture(args.camera)
+            camera_opened = camera.isOpened()
+        
+        if not camera_opened:
+            logger.error("Camera failed to open.")
+            return
+    except Exception as e:
+        logger.error(f"Failed to initialize camera: {e}")
         return
 
     # Create the main profiles directory
@@ -156,7 +182,7 @@ def zmq_add_user_server():
                     
                     # Save images to the user-specific directory
                     save_path = os.path.join(binding_user_dir, filename)
-                    publish_and_wait_zmq(socket_pub, socket_rep, cap, image_processor, view, cmd, save_path)
+                    publish_and_wait_zmq(socket_pub, socket_rep, camera, image_processor, view, cmd, save_path)
                 
                 # Wait for user credentials as JSON
                 logger.info("Waiting for user credentials...")
@@ -218,7 +244,14 @@ def zmq_add_user_server():
     except KeyboardInterrupt:
         logger.info("Interrupted by user.")
     finally:
-        cap.release()
+        # Clean up resources
+        if camera:
+            # For both types of cameras, release() should be available
+            try:
+                camera.release()
+            except Exception as e:
+                logger.warning(f"Error releasing camera: {e}")
+        
         socket_rep.close()
         socket_pub.close()
         context.term()
@@ -226,7 +259,6 @@ def zmq_add_user_server():
 
 
 def main():
-
     if args.zmq_server:
         zmq_add_user_server()
 

@@ -1,22 +1,32 @@
 version: '3.8'
+
 services:
-  face_recognizer:
-    # build: 
-    #   context: .
-    #   dockerfile: Dockerfile
+  # Base service definition (not to be run directly)
+  face-recognition-base:
     image: htmmhmd/face_recognition:3.1.4
+    profiles:
+      - "never-run"  # This service is never run directly
     environment:
       - DISPLAY=${DISPLAY}
       - QT_X11_NO_MITSHM=1
-      - DB_API_URL=http://db_service:5000
       - AV_LOG_LEVEL=0
       - OPENCV_FFMPEG_LOGLEVEL=0
     volumes:
       - ./:/app:ro
-      - face_db_data:/data:rw
+    ipc: host
+
+  # Main face recognition service
+  face_recognizer:
+    extends:
+      service: face-recognition-base
+    container_name: fr-main-service
+    environment:
+      - DB_API_URL=http://db_service:5000
+    volumes:
+      - ./data/database:/data:rw
+      - './profiles:/app/profiles:rw'
     devices:
       - /dev/video0:/dev/video0
-    ipc: host
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -27,23 +37,59 @@ services:
       - face_net
     ports:
       - "8000:8000"
+      - "5555:5555"
+      - "5544:5544"
     command: ["python", "run.py", '--handler', 'regular']
 
-  drowsiness_detector:
-    # build: 
-    #   context: .
-    #   dockerfile: Dockerfile
-    image: htmmhmd/face_recognition:3.1.4
+  # User registration service
+  add_user_service:
+    extends:
+      service: face-recognition-base
+    container_name: fr-add-user-service
     environment:
-      - DISPLAY=${DISPLAY}
-      - QT_X11_NO_MITSHM=1
-      - AV_LOG_LEVEL=0
-      - OPENCV_FFMPEG_LOGLEVEL=0
+      - DB_API_URL=http://db_service:5000
     volumes:
-      - ./:/app:ro
+      - ./data/database:/data:rw
+      - './profiles:/app/profiles:rw'
     devices:
       - /dev/video0:/dev/video0
-    ipc: host
+    restart: unless-stopped
+    depends_on:
+      - db_service
+    networks:
+      - face_net
+    ports:
+      - "5556:5555"
+      - "5545:5544"
+    command: ["python", "add_user_automation.py", "--handler", "regular"]
+
+  # Authentication service
+  auth_service:
+    extends:
+      service: face-recognition-base
+    container_name: fr-auth-service
+    environment:
+      - DB_API_URL=http://db_service:5000
+    volumes:
+      - ./data/database:/data:rw
+    devices:
+      - /dev/video0:/dev/video0
+    restart: unless-stopped
+    depends_on:
+      - db_service
+    networks:
+      - face_net
+    ports:
+      - "5557:5555"
+    command: ["python", "service_automation.py", "--mode", "authentication"]
+
+  # Drowsiness detection service
+  drowsiness_detector:
+    extends:
+      service: face-recognition-base
+    container_name: fr-drowsiness-service
+    devices:
+      - /dev/video0:/dev/video0
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -51,15 +97,16 @@ services:
       - face_net
     depends_on:
       - mjpg-streamer
-    # command: ["python", "run.py", "--enable-drowsiness", "--detector", "landmark"]
+    ports:
+      - "5558:5555"
+    command: ["python", "service_automation.py", "--mode", "drowsiness"]
 
+  # Database service
   db_service:
-    # build: 
-    #   context: .
-    #   dockerfile: Dockerfile.db
     image: htmmhmd/face_recognition_db:3.1.4
+    container_name: fr-db-service
     volumes:
-      -  face_db_data:/data:rw
+      - ./data/database:/data:rw
       - ./src/database:/app/src/database:ro
       - ./src/config:/app/src/config:ro
     ports:
@@ -67,10 +114,12 @@ services:
     restart: unless-stopped
     networks:
       - face_net
-    command: ["python" ,"-m" , "src.database.api.db_api"]
+    command: ["python", "-m", "src.database.api.db_api"]
     
+  # Video streaming service
   mjpg-streamer:
     image: htmmhmd/mjpg-streamer:latest
+    container_name: fr-mjpg-streamer
     ports:
       - "8080:8080"
     devices:

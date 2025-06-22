@@ -22,3 +22,6 @@ class FaceDatabase:
     def update_last_login(self, username):
         """Update the last login time for a user."""
         return self.db_handler.update_last_login(username)
+    def get_user(self, username):
+        """Get a user's embedding and metadata."""
+        return self.db_handler.get_user(username)
